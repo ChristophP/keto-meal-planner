@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "dist/**",
+      "use": "@now/static"
+    }
+  ],
+  "alias": "keto-planner.deedop.de",
+  "routes": [
+    {
+      "src": "^/[^.]+$",
+      "dest": "/dist/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/$1"
+    }
+  ]
+}

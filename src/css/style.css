@@ -1,0 +1,59 @@
+@tailwind base;
+
+/* my resets */
+html {
+  font-size: 16px;
+  @apply .bg-gray-200 .text-gray-800 .font-sans;
+}
+
+body {
+  @apply .w-screen .h-screen .flex .flex-col
+}
+
+hr {
+  @apply .border-b .my-4;
+}
+
+input::placeholder {
+  @apply .font-light;
+}
+
+svg {
+  fill: currentColor;
+}
+/* my resets end */
+
+
+@tailwind components;
+
+/* my components */
+/* my components end */
+
+@tailwind utilities;
+
+/* put custom utilities here */
+
+.height-minus-header-and-footer {
+  min-height: calc(100vh - 4.717rem - 1.6rem);
+}
+
+.header-gradient {
+  background-image: linear-gradient(180deg, theme('colors.green.900'), theme('colors.green.700'));
+}
+
+.collapsed {
+  border-collapse: collapse;
+}
+
+.v-gap > * + * {
+  @apply mt-4;
+}
+
+.v-gap-sm > * + * {
+  @apply mt-2;
+}
+
+.h-gap > * + * {
+  @apply ml-4;
+}
+
