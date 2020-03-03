@@ -1,9 +1,12 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Attributes exposing (class)
+import Data.Meal as Meal
+import Html exposing (Html, button, div, li, ol, span, text, ul)
+import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
+import List.Extra as LE
+import View.Icons as Icons
 
 
 main : Program () Model Msg
@@ -18,6 +21,14 @@ main =
 
 
 -- MODEL
+
+
+totalAllowedCalories =
+    800
+
+
+targetNutritionRatio =
+    { protein = 0.08, fat = 0.84, carbs = 0.16 }
 
 
 type alias Model =
@@ -54,6 +65,54 @@ update msg model =
 
 view : Model -> Browser.Document Msg
 view model =
+    let
+        mealPctg =
+            case LE.getAt model.count Meal.meals of
+                Just meal ->
+                    Meal.toPercentage meal
+
+                Nothing ->
+                    0
+
+        -- should never happen
+    in
     Browser.Document "Keto Meal Planner"
-        [ div [ class "mt-auto text-center text-2xl" ] [ text "Meal" ]
+        [ div [ class "mt-auto text-2xl text-center bg-white" ]
+            [ text "Target calories"
+            , ol [ class "flex justify-around" ]
+                [ li [ class "flex flex-col p-2 border-r border-black" ]
+                    [ span [] [ text "Protein" ]
+                    , span [] [ text <| String.fromFloat (totalAllowedCalories * targetNutritionRatio.protein * mealPctg), text " kcal" ]
+                    , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
+                    ]
+                , li [ class "flex flex-col p-2 border-r border-black" ]
+                    [ span [] [ text "Fat" ]
+                    , span [] [ text <| String.fromFloat (totalAllowedCalories * targetNutritionRatio.fat * mealPctg), text " kcal" ]
+                    , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
+                    ]
+                , li [ class "flex flex-col p-2" ]
+                    [ span [] [ text "Carbs" ]
+                    , span [] [ text <| String.fromFloat (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg), text " kcal" ]
+                    , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
+                    ]
+                ]
+            ]
+        , div [ class "py-1 flex justify-between items-center border-t border-black text-center text-3xl bg-white shadow-md" ]
+            [ button
+                [ class "w-24", onClick Decrement, disabled (model.count <= 0) ]
+                [ Icons.chevronLeft ]
+            , div [ class "flex-1 overflow-hidden" ]
+                [ ul
+                    [ class "w-48 flex items-center transition-tranform duration-500"
+                    , style "transform" ("translateX(-" ++ String.fromInt (model.count * 12) ++ "rem)")
+                    ]
+                  <|
+                    List.map viewMeal Meal.meals
+                ]
+            , button [ class "w-24", onClick Increment, disabled (model.count >= List.length Meal.meals - 1) ] [ Icons.chevronRight ]
+            ]
         ]
+
+
+viewMeal meal =
+    li [ class "flex-full px-2 text-center" ] [ text <| Meal.toString meal ]
