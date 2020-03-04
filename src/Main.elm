@@ -1,11 +1,13 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom as Dom
 import Data.Meal as Meal
-import Html exposing (Html, button, div, li, ol, span, text, ul)
-import Html.Attributes exposing (class, disabled, style)
+import Html exposing (Html, button, div, label, li, ol, option, select, span, text, ul)
+import Html.Attributes exposing (class, disabled, for, id, style)
 import Html.Events exposing (onClick)
 import List.Extra as LE
+import Task
 import Util exposing (toFixed)
 import View.Icons as Icons
 
@@ -37,12 +39,12 @@ caloriesPerGram =
 
 
 type alias Model =
-    { count : Int }
+    { count : Int, showFoods : Bool }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { count = 0 }, Cmd.none )
+    ( { count = 0, showFoods = False }, Cmd.none )
 
 
 
@@ -52,6 +54,9 @@ init _ =
 type Msg
     = Increment
     | Decrement
+    | AddFood
+    | CancelDialog
+    | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -63,9 +68,22 @@ update msg model =
         Decrement ->
             ( { model | count = model.count - 1 }, Cmd.none )
 
+        AddFood ->
+            ( { model | showFoods = True }, Cmd.none )
+
+        CancelDialog ->
+            ( { model | showFoods = False }, Cmd.none )
+
+        NoOp ->
+            ( model, Cmd.none )
+
 
 
 -- VIEW
+
+
+foodSelectId =
+    "food-select"
 
 
 view : Model -> Browser.Document Msg
@@ -82,7 +100,21 @@ view model =
         -- should never happen
     in
     Browser.Document "Keto Meal Planner"
-        [ div [ class "mt-auto text-2xl text-center bg-white" ]
+        [ div [ class "flex justify-between items-center border-b border-black text-center text-2xl bg-white shadow-md" ]
+            [ button
+                [ class "w-20", onClick Decrement, disabled (model.count <= 0) ]
+                [ Icons.chevronLeft ]
+            , div [ class "flex-1 overflow-hidden" ]
+                [ ul
+                    [ class "flex flex-full items-center transition-tranform duration-500"
+                    , style "transform" ("translateX(-" ++ String.fromInt (model.count * 100) ++ "%)")
+                    ]
+                  <|
+                    List.map viewMeal Meal.meals
+                ]
+            , button [ class "w-20", onClick Increment, disabled (model.count >= List.length Meal.meals - 1) ] [ Icons.chevronRight ]
+            ]
+        , div [ class "text-2xl text-center bg-white" ]
             [ text "Target calories"
             , ol [ class "flex" ]
                 [ li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
@@ -102,21 +134,29 @@ view model =
                     ]
                 ]
             ]
-        , div [ class "py-1 flex justify-between items-center border-t border-black text-center text-3xl bg-white shadow-md" ]
-            [ button
-                [ class "w-24", onClick Decrement, disabled (model.count <= 0) ]
-                [ Icons.chevronLeft ]
-            , div [ class "flex-1 overflow-hidden" ]
-                [ ul
-                    [ class "flex flex-full items-center transition-tranform duration-500"
-                    , style "transform" ("translateX(-" ++ String.fromInt (model.count * 100) ++ "%)")
-                    ]
-                  <|
-                    List.map viewMeal Meal.meals
-                ]
-            , button [ class "w-24", onClick Increment, disabled (model.count >= List.length Meal.meals - 1) ] [ Icons.chevronRight ]
+        , button
+            [ class "mt-auto mx-auto w-24 h-24 rounded-full text-blue-400"
+            , onClick AddFood
             ]
+            [ Icons.addSolid ]
+        , viewModal model.showFoods
         ]
+
+
+viewModal open =
+    if open then
+        div [ class "fixed inset-0 w-screen h-screen flex items-center justify-center p-4" ]
+            [ div [ class "absolute inset-0 bg-gray-400 opacity-50" ] []
+            , div [ class "abolute w-full h-full bg-white rounded-lg z-10" ]
+                [ div [ class "border-b border-gray-400 py-2 text-center text-xl relative" ]
+                    [ text "Pick Food"
+                    , button [ class "absolute w-8 h-8 right-0 top-0 mt-2 mr-2", onClick CancelDialog ] [ Icons.close ]
+                    ]
+                ]
+            ]
+
+    else
+        text ""
 
 
 viewMeal meal =
