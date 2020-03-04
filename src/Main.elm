@@ -3,8 +3,8 @@ module Main exposing (main)
 import Browser
 import Browser.Dom as Dom
 import Data.Meal as Meal
-import Html exposing (Html, button, div, label, li, ol, option, select, span, text, ul)
-import Html.Attributes exposing (class, disabled, for, id, style)
+import Html exposing (Html, button, div, input, label, li, ol, option, select, span, text, ul)
+import Html.Attributes exposing (class, disabled, for, id, placeholder, style)
 import Html.Events exposing (onClick)
 import List.Extra as LE
 import Task
@@ -69,7 +69,7 @@ update msg model =
             ( { model | count = model.count - 1 }, Cmd.none )
 
         AddFood ->
-            ( { model | showFoods = True }, Cmd.none )
+            ( { model | showFoods = True }, Task.attempt (always NoOp) (Dom.focus "food-search") )
 
         CancelDialog ->
             ( { model | showFoods = False }, Cmd.none )
@@ -145,13 +145,16 @@ view model =
 
 viewModal open =
     if open then
-        div [ class "fixed inset-0 w-screen h-screen flex items-center justify-center p-4" ]
-            [ div [ class "absolute inset-0 bg-gray-400 opacity-50" ] []
-            , div [ class "abolute w-full h-full bg-white rounded-lg z-10" ]
+        div [ class "animate-appear fixed inset-0 w-screen h-screen flex items-center justify-center p-4" ]
+            [ div [ class "absolute inset-0 bg-black opacity-50" ] []
+            , div [ class "animate-slideIn w-full h-full bg-white rounded-lg z-10 shadow-md" ]
                 [ div [ class "border-b border-gray-400 py-2 text-center text-xl relative" ]
                     [ text "Pick Food"
                     , button [ class "absolute w-8 h-8 right-0 top-0 mt-2 mr-2", onClick CancelDialog ] [ Icons.close ]
                     ]
+                , input [ id "food-search", class "w-full p-2 shadow", placeholder "Search for Food" ] []
+                , ul [ class "p-4" ]
+                    (List.map (\index -> li [] [ text <| ("Food " ++ String.fromInt index) ]) <| List.range 0 10)
                 ]
             ]
 
