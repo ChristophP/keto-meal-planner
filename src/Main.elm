@@ -6,6 +6,7 @@ import Html exposing (Html, button, div, li, ol, span, text, ul)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
 import List.Extra as LE
+import Util exposing (toFixed)
 import View.Icons as Icons
 
 
@@ -28,7 +29,11 @@ totalAllowedCalories =
 
 
 targetNutritionRatio =
-    { protein = 0.08, fat = 0.84, carbs = 0.16 }
+    { protein = 0.08, fat = 0.84, carbs = 0.08 }
+
+
+caloriesPerGram =
+    { protein = 4, fat = 9, carbs = 4 }
 
 
 type alias Model =
@@ -80,19 +85,19 @@ view model =
         [ div [ class "mt-auto text-2xl text-center bg-white" ]
             [ text "Target calories"
             , ol [ class "flex" ]
-                [ li [ class "flex flex-1 flex-col p-2 border-r border-black" ]
+                [ li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
                     [ span [] [ text "Protein" ]
-                    , span [] [ text <| String.fromFloat (totalAllowedCalories * targetNutritionRatio.protein * mealPctg), text " kcal" ]
+                    , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
                     , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
                     ]
-                , li [ class "flex flex-1 flex-col p-2 border-r border-black" ]
-                    [ span [] [ text "Fat" ]
-                    , span [] [ text <| String.fromFloat (totalAllowedCalories * targetNutritionRatio.fat * mealPctg), text " kcal" ]
+                , li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
+                    [ span [ class "text-sm" ] [ text "Fat" ]
+                    , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat), text "g" ]
                     , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
                     ]
-                , li [ class "flex flex-1 flex-col p-2" ]
+                , li [ class "flex flex-1 flex-col p-2 text-sm" ]
                     [ span [] [ text "Carbs" ]
-                    , span [] [ text <| String.fromFloat (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg), text " kcal" ]
+                    , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs), text "g" ]
                     , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
                     ]
                 ]
