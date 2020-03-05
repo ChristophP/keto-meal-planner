@@ -9,6 +9,7 @@ import Html.Events exposing (onClick)
 import List.Extra as LE
 import Task
 import Util exposing (toFixed)
+import View.Helpers as VH
 import View.Icons as Icons
 
 
@@ -139,27 +140,17 @@ view model =
             , onClick AddFood
             ]
             [ Icons.addSolid ]
-        , viewModal model.showFoods
-        ]
-
-
-viewModal open =
-    if open then
-        div [ class "animate-appear fixed inset-0 w-screen h-screen flex items-center justify-center p-4" ]
-            [ div [ class "absolute inset-0 bg-black opacity-50" ] []
-            , div [ class "animate-slideIn w-full h-full bg-white rounded-lg z-10 shadow-md" ]
-                [ div [ class "border-b border-gray-400 py-2 text-center text-xl relative" ]
-                    [ text "Pick Food"
-                    , button [ class "absolute w-8 h-8 right-0 top-0 mt-2 mr-2", onClick CancelDialog ] [ Icons.close ]
-                    ]
-                , input [ id "food-search", class "w-full p-2 shadow", placeholder "Search for Food" ] []
+        , VH.dialog
+            { show = model.showFoods
+            , title = "Pick Food"
+            , content =
+                [ input [ id "food-search", class "w-full p-2 shadow", placeholder "Search for Food" ] []
                 , ul [ class "p-4" ]
                     (List.map (\index -> li [] [ text <| ("Food " ++ String.fromInt index) ]) <| List.range 0 10)
                 ]
-            ]
-
-    else
-        text ""
+            , onClose = CancelDialog
+            }
+        ]
 
 
 viewMeal meal =

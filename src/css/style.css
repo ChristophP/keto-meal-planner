@@ -65,25 +65,3 @@ svg {
   @apply ml-4;
 }
 
-
-/* ANIMATIONS */
-
-@keyframes appear {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-appear {
-  animation-name: appear;
-  animation-duration: 1s;
-}
-
-@keyframes slideIn {
-  from { transform: translateY(-120%); }
-  to { transform: translateY(0); }
-}
-
-.animate-slideIn {
-  animation-name: slideIn;
-  animation-duration: 1s;
-}
