@@ -10,6 +10,7 @@ import Html.Attributes exposing (class, disabled, for, id, placeholder, style)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import List.Extra as LE
+import String.Mark as Mark
 import Task
 import Util exposing (toFixed)
 import View.Helpers as VH
@@ -234,9 +235,15 @@ viewFoodsList searchTerm foods =
         List.map
             (\( category, items ) ->
                 div []
-                    [ p [ class "font-bold" ] [ text category ]
+                    [ p [ class "font-bold" ] <| Mark.mark searchTerm category
                     , ul [] <|
-                        List.map (\item -> li [ class "font-italics pl-2 py-2" ] [ text item.name ]) items
+                        List.map
+                            (\item ->
+                                li
+                                    [ class "font-italics pl-2 py-2" ]
+                                    (Mark.mark searchTerm item.name)
+                            )
+                            items
                     ]
             )
             pairs
