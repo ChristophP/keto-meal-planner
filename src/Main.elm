@@ -2,10 +2,13 @@ module Main exposing (main)
 
 import Browser
 import Browser.Dom as Dom
+import Data.Food as Food
 import Data.Meal as Meal
-import Html exposing (Html, button, div, input, label, li, ol, option, select, span, text, ul)
+import Dict exposing (Dict)
+import Html exposing (Html, button, div, input, label, li, ol, option, p, select, span, text, ul)
 import Html.Attributes exposing (class, disabled, for, id, placeholder, style)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
+import Json.Decode as JD
 import List.Extra as LE
 import Task
 import Util exposing (toFixed)
@@ -13,7 +16,7 @@ import View.Helpers as VH
 import View.Icons as Icons
 
 
-main : Program () Model Msg
+main : Program JD.Value Model Msg
 main =
     Browser.document
         { init = init
@@ -39,13 +42,37 @@ caloriesPerGram =
     { protein = 4, fat = 9, carbs = 4 }
 
 
+type alias Foods =
+    Result String (Dict String (List Food.Food))
+
+
 type alias Model =
-    { count : Int, showFoods : Bool }
+    { count : Int
+    , showFoods : Bool
+    , foods : Foods
+    , searchTerm : String
+    }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { count = 0, showFoods = False }, Cmd.none )
+init : JD.Value -> ( Model, Cmd Msg )
+init json =
+    ( { count = 0
+      , showFoods = False
+      , foods =
+            JD.decodeValue Food.decoder json
+                |> Result.mapError
+                    (\err ->
+                        let
+                            _ =
+                                Debug.log "err" err
+                        in
+                        err
+                    )
+                |> Result.mapError (always "Could not decode food list")
+      , searchTerm = ""
+      }
+    , Cmd.none
+    )
 
 
 
@@ -57,6 +84,7 @@ type Msg
     | Decrement
     | AddFood
     | CancelDialog
+    | ChangeSearch String
     | NoOp
 
 
@@ -74,6 +102,9 @@ update msg model =
 
         CancelDialog ->
             ( { model | showFoods = False }, Cmd.none )
+
+        ChangeSearch searchTerm ->
+            ( { model | searchTerm = searchTerm }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -101,57 +132,111 @@ view model =
         -- should never happen
     in
     Browser.Document "Keto Meal Planner"
-        [ div [ class "flex justify-between items-center border-b border-black text-center text-2xl bg-white shadow-md" ]
-            [ button
-                [ class "w-20", onClick Decrement, disabled (model.count <= 0) ]
-                [ Icons.chevronLeft ]
-            , div [ class "flex-1 overflow-hidden" ]
-                [ ul
-                    [ class "flex flex-full items-center transition-tranform duration-500"
-                    , style "transform" ("translateX(-" ++ String.fromInt (model.count * 100) ++ "%)")
+        [ div [ class "w-full h-full flex flex-col" ] <|
+            case model.foods of
+                Ok foods ->
+                    [ VH.slider
+                        { items = List.map Meal.toString Meal.meals
+                        , onBack = Decrement
+                        , onNext = Increment
+                        , index = model.count
+                        }
+                    , div [ class "text-2xl text-center bg-white" ]
+                        [ text "Target calories"
+                        , ol [ class "flex" ]
+                            [ li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
+                                [ span [] [ text "Protein" ]
+                                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
+                                , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
+                                ]
+                            , li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
+                                [ span [ class "text-sm" ] [ text "Fat" ]
+                                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat), text "g" ]
+                                , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
+                                ]
+                            , li [ class "flex flex-1 flex-col p-2 text-sm" ]
+                                [ span [] [ text "Carbs" ]
+                                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs), text "g" ]
+                                , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
+                                ]
+                            ]
+                        ]
+                    , button
+                        [ class "mt-auto mx-auto w-24 h-24 rounded-full text-blue-400"
+                        , onClick AddFood
+                        ]
+                        [ Icons.addSolid ]
+                    , VH.dialog
+                        { show = model.showFoods
+                        , title = "Pick Food"
+                        , content =
+                            [ div [ class "h-full flex flex-col" ]
+                                [ VH.inputField
+                                    [ id "food-search"
+                                    , placeholder "Search for Food"
+                                    , onInput ChangeSearch
+                                    ]
+                                    []
+                                , viewFoodsList model.searchTerm foods
+                                ]
+                            ]
+                        , onClose = CancelDialog
+                        }
                     ]
-                  <|
-                    List.map viewMeal Meal.meals
-                ]
-            , button [ class "w-20", onClick Increment, disabled (model.count >= List.length Meal.meals - 1) ] [ Icons.chevronRight ]
-            ]
-        , div [ class "text-2xl text-center bg-white" ]
-            [ text "Target calories"
-            , ol [ class "flex" ]
-                [ li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
-                    [ span [] [ text "Protein" ]
-                    , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
-                    , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
-                    ]
-                , li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
-                    [ span [ class "text-sm" ] [ text "Fat" ]
-                    , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat), text "g" ]
-                    , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
-                    ]
-                , li [ class "flex flex-1 flex-col p-2 text-sm" ]
-                    [ span [] [ text "Carbs" ]
-                    , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs), text "g" ]
-                    , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
-                    ]
-                ]
-            ]
-        , button
-            [ class "mt-auto mx-auto w-24 h-24 rounded-full text-blue-400"
-            , onClick AddFood
-            ]
-            [ Icons.addSolid ]
-        , VH.dialog
-            { show = model.showFoods
-            , title = "Pick Food"
-            , content =
-                [ input [ id "food-search", class "w-full p-2 shadow", placeholder "Search for Food" ] []
-                , ul [ class "p-4" ]
-                    (List.map (\index -> li [] [ text <| ("Food " ++ String.fromInt index) ]) <| List.range 0 10)
-                ]
-            , onClose = CancelDialog
-            }
+
+                Err err ->
+                    [ div [ class "w-full h-full text-xl" ] [ text err ] ]
         ]
 
 
-viewMeal meal =
-    li [ class "flex-full px-2 text-center" ] [ text <| Meal.toString meal ]
+caseInsensitiveSearch : String -> String -> Bool
+caseInsensitiveSearch search word =
+    String.contains (String.toLower search) (String.toLower word)
+
+
+searchFoods : String -> Dict String (List Food.Food) -> Dict String (List Food.Food)
+searchFoods searchTerm foods =
+    case searchTerm of
+        "" ->
+            foods
+
+        _ ->
+            Dict.foldl
+                (\key value acc ->
+                    if caseInsensitiveSearch searchTerm key then
+                        Dict.insert key value acc
+
+                    else
+                        let
+                            filteredCategory =
+                                List.filter
+                                    (\food -> caseInsensitiveSearch searchTerm food.name)
+                                    value
+                        in
+                        case filteredCategory of
+                            [] ->
+                                acc
+
+                            _ ->
+                                Dict.insert key filteredCategory acc
+                )
+                Dict.empty
+                foods
+
+
+viewFoodsList : String -> Dict String (List Food.Food) -> Html Msg
+viewFoodsList searchTerm foods =
+    let
+        pairs =
+            Dict.toList <| searchFoods searchTerm foods
+    in
+    div [ class "flex-1 overflow-y-auto p-2 v-gap-sm" ] <|
+        List.map
+            (\( category, items ) ->
+                div []
+                    [ p [ class "font-bold" ] [ text category ]
+                    , ul [] <|
+                        List.map (\item -> li [ class "font-italics pl-2 py-2" ] [ text item.name ]) items
+                    ]
+            )
+            pairs
