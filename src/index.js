@@ -1,5 +1,5 @@
 import {Elm} from './Main.elm'
-import data from './clean-data-2.json'
+import data from './data.json'
 
 
 const app = Elm.Main.init({
