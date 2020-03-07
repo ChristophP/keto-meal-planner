@@ -61,14 +61,6 @@ init json =
       , showFoods = False
       , foods =
             JD.decodeValue Food.decoder json
-                |> Result.mapError
-                    (\err ->
-                        let
-                            _ =
-                                Debug.log "err" err
-                        in
-                        err
-                    )
                 |> Result.mapError (always "Could not decode food list")
       , searchTerm = ""
       }
