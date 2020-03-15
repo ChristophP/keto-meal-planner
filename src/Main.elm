@@ -52,6 +52,7 @@ type alias Model =
     , showFoods : Bool
     , foods : Foods
     , searchTerm : String
+    , selectedFoods : List Food.Food
     }
 
 
@@ -63,6 +64,7 @@ init json =
             JD.decodeValue Food.decoder json
                 |> Result.mapError (always "Could not decode food list")
       , searchTerm = ""
+      , selectedFoods = []
       }
     , Cmd.none
     )
@@ -78,6 +80,7 @@ type Msg
     | AddFood
     | CancelDialog
     | ChangeSearch String
+    | FoodClicked Food.Food
     | NoOp
 
 
@@ -91,13 +94,23 @@ update msg model =
             ( { model | count = model.count - 1 }, Cmd.none )
 
         AddFood ->
-            ( { model | showFoods = True }, Task.attempt (always NoOp) (Dom.focus "food-search") )
+            ( { model | showFoods = True }
+            , Task.attempt (always NoOp) (Dom.focus "food-search")
+            )
 
         CancelDialog ->
             ( { model | showFoods = False }, Cmd.none )
 
         ChangeSearch searchTerm ->
             ( { model | searchTerm = searchTerm }, Cmd.none )
+
+        FoodClicked food ->
+            ( { model
+                | selectedFoods = food :: model.selectedFoods
+                , showFoods = False
+              }
+            , Cmd.none
+            )
 
         NoOp ->
             ( model, Cmd.none )
@@ -120,12 +133,11 @@ view model =
                     Meal.toPercentage meal
 
                 Nothing ->
+                    -- should never happen
                     0
-
-        -- should never happen
     in
     Browser.Document "Keto Meal Planner"
-        [ div [ class "w-full h-full flex flex-col" ] <|
+        [ div [ class "flex flex-col w-full h-full" ] <|
             case model.foods of
                 Ok foods ->
                     [ VH.slider
@@ -137,17 +149,17 @@ view model =
                     , div [ class "text-2xl text-center bg-white" ]
                         [ text "Target calories"
                         , ol [ class "flex" ]
-                            [ li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
+                            [ li [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                                 [ span [] [ text "Protein" ]
                                 , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
                                 , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
                                 ]
-                            , li [ class "flex flex-1 flex-col p-2 border-r border-black text-sm" ]
+                            , li [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                                 [ span [ class "text-sm" ] [ text "Fat" ]
                                 , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat), text "g" ]
                                 , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
                                 ]
-                            , li [ class "flex flex-1 flex-col p-2 text-sm" ]
+                            , li [ class "flex flex-col flex-1 p-2 text-sm" ]
                                 [ span [] [ text "Carbs" ]
                                 , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs), text "g" ]
                                 , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
@@ -155,7 +167,8 @@ view model =
                             ]
                         ]
                     , button
-                        [ class "mt-auto mx-auto w-24 h-24 rounded-full text-blue-400"
+                        [ class "w-24 h-24 mx-auto mt-auto mb-2 rounded-full"
+                        , class "text-indigo-600 hover:text-indigo-800"
                         , onClick AddFood
                         ]
                         [ Icons.addSolid ]
@@ -163,7 +176,7 @@ view model =
                         { show = model.showFoods
                         , title = "Pick Food"
                         , content =
-                            [ div [ class "h-full flex flex-col" ]
+                            [ div [ class "flex flex-col h-full" ]
                                 [ VH.inputField
                                     [ id "food-search"
                                     , placeholder "Search for Food"
@@ -223,16 +236,24 @@ viewFoodsList searchTerm foods =
         pairs =
             Dict.toList <| searchFoods searchTerm foods
     in
-    div [ class "flex-1 overflow-y-auto p-2 v-gap-sm" ] <|
+    div [ class "flex-1 overflow-y-auto v-gap" ] <|
         List.map
             (\( category, items ) ->
-                div []
-                    [ p [ class "font-bold" ] <| Mark.mark searchTerm category
-                    , ul [] <|
+                div [ class "px-4" ]
+                    [ p
+                        [ class "pt-1 pb-2 border-t-2 border-indigo-700"
+                        , class "antialiased font-semibold text-indigo-700"
+                        ]
+                      <|
+                        Mark.mark searchTerm category
+                    , ul [ class "mt-2" ] <|
                         List.map
                             (\item ->
                                 li
-                                    [ class "font-italics pl-2 py-2" ]
+                                    [ class "py-2 pl-2 text-lg cursor-pointer font-italics"
+                                    , class "hover:bg-gray-100 active:bg-gray-100"
+                                    , onClick <| FoodClicked item
+                                    ]
                                     (Mark.mark searchTerm item.name)
                             )
                             items

@@ -63,10 +63,24 @@ dialog { show, title, content, onClose } =
         ]
 
 
+slider :
+    { onBack : msg
+    , onNext : msg
+    , index : Int
+    , items : List String
+    }
+    -> Html msg
 slider { onBack, onNext, index, items } =
+    let
+        buttonClasses =
+            class "w-20 text-indigo-600 hover:text-indigo-800"
+    in
     div [ class "w-full flex justify-between items-center border-b border-black text-center text-2xl bg-white shadow-md" ]
         [ button
-            [ class "w-20", onClick onBack, disabled (index <= 0) ]
+            [ buttonClasses
+            , onClick onBack
+            , disabled (index <= 0)
+            ]
             [ Icons.chevronLeft ]
         , div [ class "flex-1 overflow-hidden" ]
             [ ul
@@ -80,5 +94,10 @@ slider { onBack, onNext, index, items } =
                     )
                     items
             ]
-        , button [ class "w-20", onClick onNext, disabled (index >= List.length items - 1) ] [ Icons.chevronRight ]
+        , button
+            [ buttonClasses
+            , onClick onNext
+            , disabled (index >= List.length items - 1)
+            ]
+            [ Icons.chevronRight ]
         ]
