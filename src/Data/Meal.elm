@@ -9,6 +9,7 @@ type Meal
     | Dinner Float
 
 
+meals : List Meal
 meals =
     [ Breakfast 0.2
     , MorningSnack 0.15
@@ -18,6 +19,7 @@ meals =
     ]
 
 
+toString : Meal -> String
 toString meal =
     case meal of
         Breakfast _ ->
@@ -36,6 +38,7 @@ toString meal =
             "Dinner"
 
 
+toPercentage : Meal -> Float
 toPercentage meal =
     case meal of
         Breakfast val ->

@@ -81,6 +81,7 @@ type Msg
     | CancelDialog
     | ChangeSearch String
     | FoodClicked Food.Food
+    | DeleteFoodClicked Food.Food
     | NoOp
 
 
@@ -95,7 +96,7 @@ update msg model =
 
         AddFood ->
             ( { model | showFoods = True }
-            , Task.attempt (always NoOp) (Dom.focus "food-search")
+            , Task.attempt (always NoOp) (Dom.focus foodSearchId)
             )
 
         CancelDialog ->
@@ -112,6 +113,11 @@ update msg model =
             , Cmd.none
             )
 
+        DeleteFoodClicked food ->
+            ( { model | selectedFoods = LE.remove food model.selectedFoods }
+            , Cmd.none
+            )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -120,8 +126,25 @@ update msg model =
 -- VIEW
 
 
-foodSelectId =
-    "food-select"
+foodSearchId : String
+foodSearchId =
+    "food-search"
+
+
+viewNutrientPctg : Float -> Food.Food -> String
+viewNutrientPctg num food =
+    toFixed 1 (num / Food.totalGrams food * 100) ++ "%"
+
+
+viewMealGrams : (Food.Food -> Float) -> List Food.Food -> String
+viewMealGrams getter foods =
+    let
+        str =
+            List.map getter foods
+                |> List.sum
+                |> toFixed 1
+    in
+    str ++ "g"
 
 
 view : Model -> Browser.Document Msg
@@ -146,29 +169,48 @@ view model =
                         , onNext = Increment
                         , index = model.count
                         }
-                    , div [ class "text-2xl text-center bg-white" ]
-                        [ text "Target calories"
-                        , ol [ class "flex" ]
-                            [ li [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
-                                [ span [] [ text "Protein" ]
-                                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
-                                , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
-                                ]
-                            , li [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
-                                [ span [ class "text-sm" ] [ text "Fat" ]
-                                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat), text "g" ]
-                                , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
-                                ]
-                            , li [ class "flex flex-col flex-1 p-2 text-sm" ]
-                                [ span [] [ text "Carbs" ]
-                                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs), text "g" ]
-                                , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
-                                ]
-                            ]
+                    , div [ class "flex-1 overflow-y-auto" ]
+                        [ viewTotalNutrientsHeader model mealPctg
+                        , ol [ class "mt-4 text-2xl text-center" ] <|
+                            List.map
+                                (\food ->
+                                    li [ class "flex flex-col mt-2 bg-white shadow" ]
+                                        [ div
+                                            [ class "relative flex items-center justify-center"
+                                            , class "text-sm font-semibold leading-relaxed"
+                                            ]
+                                            [ span [ class "text-indigo-700 " ] [ text food.name ]
+                                            , button
+                                                [ class "absolute right-0 inline-block w-4 mr-2 text-gray-400"
+                                                , class "cursor-pointer hover:text-gray-600"
+                                                , onClick <| DeleteFoodClicked food
+                                                ]
+                                                [ Icons.trash ]
+                                            ]
+                                        , div [ class "flex pb-1" ]
+                                            [ div [ class "flex flex-col flex-1 px-2 text-sm" ]
+                                                [ span [] [ text "Protein" ]
+                                                , span [] [ text <| toFixed 2 food.protein, text "g" ]
+                                                , span [] [ text (viewNutrientPctg food.protein food) ]
+                                                ]
+                                            , div [ class "flex flex-col flex-1 px-2 text-sm" ]
+                                                [ span [ class "text-sm" ] [ text "Fat" ]
+                                                , span [] [ text <| toFixed 2 food.fat, text "g" ]
+                                                , span [] [ text (viewNutrientPctg food.fat food) ]
+                                                ]
+                                            , div [ class "flex flex-col flex-1 px-2 text-sm" ]
+                                                [ span [] [ text "Carbs" ]
+                                                , span [] [ text <| toFixed 2 food.carbs, text "g" ]
+                                                , span [] [ text (viewNutrientPctg food.carbs food) ]
+                                                ]
+                                            ]
+                                        ]
+                                )
+                                model.selectedFoods
                         ]
                     , button
-                        [ class "w-24 h-24 mx-auto mt-auto mb-2 rounded-full"
-                        , class "text-indigo-600 hover:text-indigo-800"
+                        [ class "bottom-0 w-16 h-16 mx-auto mb-2 bg-white rounded-full"
+                        , class "text-indigo-600 shadow-lg hover:text-indigo-800"
                         , onClick AddFood
                         ]
                         [ Icons.addSolid ]
@@ -178,7 +220,7 @@ view model =
                         , content =
                             [ div [ class "flex flex-col h-full" ]
                                 [ VH.inputField
-                                    [ id "food-search"
+                                    [ id foodSearchId
                                     , placeholder "Search for Food"
                                     , onInput ChangeSearch
                                     ]
@@ -260,3 +302,30 @@ viewFoodsList searchTerm foods =
                     ]
             )
             pairs
+
+
+viewTotalNutrientsHeader : Model -> Float -> Html Msg
+viewTotalNutrientsHeader model mealPctg =
+    div [ class "mt-2 text-2xl text-center bg-white" ]
+        [ span [ class "text-sm tracking-widest uppercase" ] [ text "Target calories" ]
+        , div [ class "flex" ]
+            [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
+                [ span [] [ text "Protein" ]
+                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
+                , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
+                , span [ class "font-medium text-indigo-700" ] [ text (viewMealGrams .protein model.selectedFoods) ]
+                ]
+            , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
+                [ span [ class "text-sm" ] [ text "Fat" ]
+                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat), text "g" ]
+                , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
+                , span [ class "font-medium text-indigo-700" ] [ text (viewMealGrams .fat model.selectedFoods) ]
+                ]
+            , div [ class "flex flex-col flex-1 p-2 text-sm" ]
+                [ span [] [ text "Carbs" ]
+                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs), text "g" ]
+                , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
+                , span [ class "font-medium text-indigo-700" ] [ text (viewMealGrams .carbs model.selectedFoods) ]
+                ]
+            ]
+        ]

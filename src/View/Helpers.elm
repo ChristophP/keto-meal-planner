@@ -33,7 +33,7 @@ dialog :
 dialog { show, title, content, onClose } =
     div
         (attrList
-            [ ( class "fixed inset-0 w-screen h-screen flex items-center justify-center p-4", True )
+            [ ( class "fixed inset-0 flex items-center justify-center w-screen h-screen p-4", True )
             , ( style "transform" "translateY(-100vh)", not show )
             ]
         )
@@ -48,14 +48,14 @@ dialog { show, title, content, onClose } =
             []
         , div
             (attrList
-                [ ( class "w-full h-full flex flex-col bg-white rounded-lg z-10 shadow-md", True )
+                [ ( class "z-10 flex flex-col w-full h-full bg-white rounded-lg shadow-md", True )
                 , ( class "transition-transform duration-500", True )
                 , ( style "transform" "translateY(-100vh)", not show )
                 ]
             )
-            [ div [ class "py-2 border-b border-gray-400 flex items-center justify-center text-xl relative" ]
+            [ div [ class "relative flex items-center justify-center py-2 text-xl border-b border-gray-400" ]
                 [ text title
-                , button [ class "absolute w-4 right-0 mr-2", onClick onClose ]
+                , button [ class "absolute right-0 w-4 mr-2", onClick onClose ]
                     [ Icons.close ]
                 ]
             , div [ class "flex-1 overflow-hidden" ] content
@@ -73,9 +73,9 @@ slider :
 slider { onBack, onNext, index, items } =
     let
         buttonClasses =
-            class "w-20 text-indigo-600 hover:text-indigo-800"
+            class "w-16 text-indigo-600 hover:text-indigo-800"
     in
-    div [ class "w-full flex justify-between items-center border-b border-black text-center text-2xl bg-white shadow-md" ]
+    div [ class "flex items-center justify-between w-full text-2xl text-center bg-white shadow-md" ]
         [ button
             [ buttonClasses
             , onClick onBack
@@ -84,13 +84,13 @@ slider { onBack, onNext, index, items } =
             [ Icons.chevronLeft ]
         , div [ class "flex-1 overflow-hidden" ]
             [ ul
-                [ class "flex flex-full items-center transition-tranform duration-500"
+                [ class "flex items-center flex-full transition-tranform duration-500"
                 , style "transform" ("translateX(-" ++ String.fromInt (index * 100) ++ "%)")
                 ]
               <|
                 List.map
                     (\item ->
-                        li [ class "flex-full px-2 text-center" ] [ text item ]
+                        li [ class "px-2 text-center flex-full" ] [ text item ]
                     )
                     items
             ]

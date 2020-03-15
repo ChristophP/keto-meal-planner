@@ -1,4 +1,4 @@
-module Data.Food exposing (Food, decoder)
+module Data.Food exposing (Food, decoder, totalGrams)
 
 import Dict exposing (Dict)
 import Json.Decode as JD
@@ -22,3 +22,9 @@ type alias Food =
     , fat : Float
     , carbs : Float
     }
+
+
+totalGrams : Food -> Float
+totalGrams { protein, fat, carbs } =
+    protein + fat + carbs
+
