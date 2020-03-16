@@ -5,8 +5,8 @@ import Browser.Dom as Dom
 import Data.Food as Food
 import Data.Meal as Meal
 import Dict exposing (Dict)
-import Html exposing (Html, button, div, input, label, li, ol, option, p, select, span, text, ul)
-import Html.Attributes exposing (class, disabled, for, id, placeholder, style)
+import Html exposing (Html, button, div, li, ol, p, span, text, ul)
+import Html.Attributes exposing (class, id, placeholder, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import List.Extra as LE
@@ -224,6 +224,7 @@ view model =
                                     [ id foodSearchId
                                     , placeholder "Search for Food"
                                     , onInput SearchChanged
+                                    , value model.searchTerm
                                     ]
                                     []
                                 , viewFoodsList model.searchTerm foods
