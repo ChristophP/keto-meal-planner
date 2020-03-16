@@ -77,9 +77,9 @@ init json =
 type Msg
     = Increment
     | Decrement
-    | AddFood
-    | CancelDialog
-    | ChangeSearch String
+    | FoodAdded
+    | DialogCancelled
+    | SearchChanged String
     | FoodClicked Food.Food
     | DeleteFoodClicked Food.Food
     | NoOp
@@ -94,21 +94,22 @@ update msg model =
         Decrement ->
             ( { model | count = model.count - 1 }, Cmd.none )
 
-        AddFood ->
+        FoodAdded ->
             ( { model | showFoods = True }
             , Task.attempt (always NoOp) (Dom.focus foodSearchId)
             )
 
-        CancelDialog ->
+        DialogCancelled ->
             ( { model | showFoods = False }, Cmd.none )
 
-        ChangeSearch searchTerm ->
+        SearchChanged searchTerm ->
             ( { model | searchTerm = searchTerm }, Cmd.none )
 
         FoodClicked food ->
             ( { model
                 | selectedFoods = food :: model.selectedFoods
                 , showFoods = False
+                , searchTerm = ""
               }
             , Cmd.none
             )
@@ -211,7 +212,7 @@ view model =
                     , button
                         [ class "bottom-0 w-16 h-16 mx-auto mb-2 bg-white rounded-full"
                         , class "text-indigo-600 shadow-lg hover:text-indigo-800"
-                        , onClick AddFood
+                        , onClick FoodAdded
                         ]
                         [ Icons.addSolid ]
                     , VH.dialog
@@ -222,13 +223,13 @@ view model =
                                 [ VH.inputField
                                     [ id foodSearchId
                                     , placeholder "Search for Food"
-                                    , onInput ChangeSearch
+                                    , onInput SearchChanged
                                     ]
                                     []
                                 , viewFoodsList model.searchTerm foods
                                 ]
                             ]
-                        , onClose = CancelDialog
+                        , onClose = DialogCancelled
                         }
                     ]
 
