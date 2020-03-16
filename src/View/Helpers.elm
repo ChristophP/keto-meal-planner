@@ -1,7 +1,7 @@
-module View.Helpers exposing (dialog, inputField, slider)
+module View.Helpers exposing (attrIf, dialog, inputField, slider)
 
 import Html exposing (Attribute, Html, button, div, input, li, p, text, ul)
-import Html.Attributes exposing (class, disabled, style, type_)
+import Html.Attributes exposing (class, classList, disabled, style)
 import Html.Events exposing (onClick)
 import View.Icons as Icons
 
@@ -16,6 +16,15 @@ attrList =
             else
                 Nothing
         )
+
+
+attrIf : Bool -> Attribute msg -> Attribute msg
+attrIf show attr =
+    if show then
+        attr
+
+    else
+        classList []
 
 
 inputField attr =

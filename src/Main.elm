@@ -5,8 +5,8 @@ import Browser.Dom as Dom
 import Data.Food as Food
 import Data.Meal as Meal
 import Dict exposing (Dict)
-import Html exposing (Html, button, div, li, ol, p, span, text, ul)
-import Html.Attributes exposing (class, id, placeholder, value)
+import Html exposing (Html, button, div, input, li, ol, p, span, text, ul)
+import Html.Attributes exposing (class, classList, id, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import List.Extra as LE
@@ -52,7 +52,8 @@ type alias Model =
     , showFoods : Bool
     , foods : Foods
     , searchTerm : String
-    , selectedFoods : List Food.Food
+    , selectedFoods : List ( Int, Food.Food )
+    , openOverlay : Maybe Int
     }
 
 
@@ -65,6 +66,7 @@ init json =
                 |> Result.mapError (always "Could not decode food list")
       , searchTerm = ""
       , selectedFoods = []
+      , openOverlay = Nothing
       }
     , Cmd.none
     )
@@ -82,6 +84,7 @@ type Msg
     | SearchChanged String
     | FoodClicked Food.Food
     | DeleteFoodClicked Food.Food
+    | OverlayClicked Int
     | NoOp
 
 
@@ -95,7 +98,10 @@ update msg model =
             ( { model | count = model.count - 1 }, Cmd.none )
 
         FoodAdded ->
-            ( { model | showFoods = True }
+            ( { model
+                | showFoods = True
+                , openOverlay = Maybe.map ((+) 1) model.openOverlay
+              }
             , Task.attempt (always NoOp) (Dom.focus foodSearchId)
             )
 
@@ -107,7 +113,7 @@ update msg model =
 
         FoodClicked food ->
             ( { model
-                | selectedFoods = food :: model.selectedFoods
+                | selectedFoods = ( 10, food ) :: model.selectedFoods
                 , showFoods = False
                 , searchTerm = ""
               }
@@ -115,9 +121,37 @@ update msg model =
             )
 
         DeleteFoodClicked food ->
-            ( { model | selectedFoods = LE.remove food model.selectedFoods }
+            let
+                newList =
+                    case LE.findIndex (Tuple.second >> (==) food) model.selectedFoods of
+                        Just index ->
+                            LE.removeAt index model.selectedFoods
+
+                        Nothing ->
+                            model.selectedFoods
+            in
+            ( { model
+                | selectedFoods = newList
+                , openOverlay = Nothing
+              }
             , Cmd.none
             )
+
+        OverlayClicked index ->
+            let
+                newOpenOverlay =
+                    case model.openOverlay of
+                        Just openIndex ->
+                            if openIndex == index then
+                                Nothing
+
+                            else
+                                Just index
+
+                        Nothing ->
+                            Just index
+            in
+            ( { model | openOverlay = newOpenOverlay }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -137,11 +171,11 @@ viewNutrientPctg num food =
     toFixed 1 (num / Food.totalGrams food * 100) ++ "%"
 
 
-viewMealGrams : (Food.Food -> Float) -> List Food.Food -> String
+viewMealGrams : (Food.Food -> Float) -> List ( Int, Food.Food ) -> String
 viewMealGrams getter foods =
     let
         str =
-            List.map getter foods
+            List.map (\( grams, food ) -> toFloat grams * getter food / 100) foods
                 |> List.sum
                 |> toFixed 1
     in
@@ -173,40 +207,8 @@ view model =
                     , div [ class "flex-1 overflow-y-auto" ]
                         [ viewTotalNutrientsHeader model mealPctg
                         , ol [ class "mt-4 text-2xl text-center" ] <|
-                            List.map
-                                (\food ->
-                                    li [ class "flex flex-col mt-2 bg-white shadow" ]
-                                        [ div
-                                            [ class "relative flex items-center justify-center"
-                                            , class "text-sm font-semibold leading-relaxed"
-                                            ]
-                                            [ span [ class "text-indigo-700 " ] [ text food.name ]
-                                            , button
-                                                [ class "absolute right-0 inline-block w-4 mr-2 text-gray-400"
-                                                , class "cursor-pointer hover:text-gray-600"
-                                                , onClick <| DeleteFoodClicked food
-                                                ]
-                                                [ Icons.trash ]
-                                            ]
-                                        , div [ class "flex pb-1" ]
-                                            [ div [ class "flex flex-col flex-1 px-2 text-sm" ]
-                                                [ span [] [ text "Protein" ]
-                                                , span [] [ text <| toFixed 2 food.protein, text "g" ]
-                                                , span [] [ text (viewNutrientPctg food.protein food) ]
-                                                ]
-                                            , div [ class "flex flex-col flex-1 px-2 text-sm" ]
-                                                [ span [ class "text-sm" ] [ text "Fat" ]
-                                                , span [] [ text <| toFixed 2 food.fat, text "g" ]
-                                                , span [] [ text (viewNutrientPctg food.fat food) ]
-                                                ]
-                                            , div [ class "flex flex-col flex-1 px-2 text-sm" ]
-                                                [ span [] [ text "Carbs" ]
-                                                , span [] [ text <| toFixed 2 food.carbs, text "g" ]
-                                                , span [] [ text (viewNutrientPctg food.carbs food) ]
-                                                ]
-                                            ]
-                                        ]
-                                )
+                            List.indexedMap
+                                (viewFoodItem model.openOverlay)
                                 model.selectedFoods
                         ]
                     , button
@@ -306,11 +308,118 @@ viewFoodsList searchTerm foods =
             pairs
 
 
+viewFoodItem : Maybe Int -> Int -> ( Int, Food.Food ) -> Html Msg
+viewFoodItem maybeOpenIndex index ( grams, food ) =
+    let
+        isOpen =
+            case maybeOpenIndex of
+                Just openIndex ->
+                    openIndex == index
+
+                Nothing ->
+                    False
+    in
+    li [ class "relative flex flex-col pr-8 mt-2 overflow-x-hidden bg-white shadow" ]
+        [ div
+            [ class "relative flex items-center justify-center"
+            , class "text-sm font-semibold leading-relaxed"
+            ]
+            [ span [ class "text-indigo-700 " ] [ text food.name ]
+            ]
+        , div [ class "flex pb-1" ]
+            [ div [ class "flex flex-col flex-1 px-1 text-sm" ]
+                [ span [] [ text "Protein" ]
+                , span [] [ text <| toFixed 2 food.protein, text "g" ]
+                , span [] [ text (viewNutrientPctg food.protein food) ]
+                ]
+            , div [ class "flex flex-col flex-1 px-1 text-sm" ]
+                [ span [ class "text-sm" ] [ text "Fat" ]
+                , span [] [ text <| toFixed 2 food.fat, text "g" ]
+                , span [] [ text (viewNutrientPctg food.fat food) ]
+                ]
+            , div [ class "flex flex-col flex-1 px-1 text-sm" ]
+                [ span [] [ text "Carbs" ]
+                , span [] [ text <| toFixed 2 food.carbs, text "g" ]
+                , span [] [ text (viewNutrientPctg food.carbs food) ]
+                ]
+            ]
+        , viewFoodOverlay
+            { open = isOpen
+            , onOverlayClick = OverlayClicked index
+            , onDelete = DeleteFoodClicked food
+            , food = food
+            , grams = grams
+            }
+        ]
+
+
+viewFoodOverlay :
+    { open : Bool
+    , onOverlayClick : Msg
+    , onDelete : Msg
+    , food : Food.Food
+    , grams : Int
+    }
+    -> Html Msg
+viewFoodOverlay { open, onOverlayClick, onDelete, grams, food } =
+    div
+        [ class "absolute flex-1 w-full h-full"
+        , class "overflow-hidden text-white rounded-l"
+        , class "transition-transform duration-500"
+        , VH.attrIf (not open) <| style "transform" "translateX(90%)"
+        ]
+        [ div [ class "absolute inset-0 bg-indigo-700 opacity-75" ] []
+        , div [ class "absolute inset-0 flex items-center justify-between" ]
+            [ button [ class "w-6 h-full hover:bg-indigo-800", onClick onOverlayClick ]
+                [ div
+                    [ class "transform"
+                    , classList [ ( "rotate-180", open ) ]
+                    ]
+                    [ Icons.chevronLeft ]
+                ]
+            , viewGramPicker grams
+            , button
+                [ class "w-6 mr-2 text-gray-400"
+                , class "cursor-pointer hover:text-gray-600"
+                , onClick onDelete
+                ]
+                [ Icons.trash ]
+            ]
+        ]
+
+
+viewGramPicker : Int -> Html Msg
+viewGramPicker grams =
+    let
+        buttonClasses =
+            "w-12 bg-gray-500 "
+    in
+    div [ class "flex px-2" ]
+        [ button
+            [ type_ "button"
+            , class buttonClasses
+            , class "rounded-l-md"
+            ]
+            [ text "+" ]
+        , input
+            [ class "w-16 text-center text-gray-700"
+            , value (String.fromInt grams)
+            , type_ "number"
+            ]
+            []
+        , button
+            [ class buttonClasses
+            , class "rounded-r-md"
+            ]
+            [ text "-" ]
+        ]
+
+
 viewTotalNutrientsHeader : Model -> Float -> Html Msg
 viewTotalNutrientsHeader model mealPctg =
     div [ class "mt-2 text-2xl text-center bg-white" ]
         [ span [ class "text-sm tracking-widest uppercase" ] [ text "Target calories" ]
-        , div [ class "flex" ]
+        , div [ class "flex pr-8" ]
             [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [] [ text "Protein" ]
                 , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
