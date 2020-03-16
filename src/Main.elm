@@ -82,9 +82,11 @@ type Msg
     | FoodAdded
     | DialogCancelled
     | SearchChanged String
-    | FoodClicked Food.Food
-    | DeleteFoodClicked Food.Food
+    | FoodSelected Food.Food
+    | DeleteFoodClicked Int
     | OverlayClicked Int
+    | FoodWeightPicked Int Int
+    | FoodWeightEdited String Int
     | NoOp
 
 
@@ -111,27 +113,23 @@ update msg model =
         SearchChanged searchTerm ->
             ( { model | searchTerm = searchTerm }, Cmd.none )
 
-        FoodClicked food ->
+        FoodSelected food ->
             ( { model
                 | selectedFoods = ( 10, food ) :: model.selectedFoods
                 , showFoods = False
                 , searchTerm = ""
+                , openOverlay = Nothing
               }
             , Cmd.none
             )
 
-        DeleteFoodClicked food ->
+        DeleteFoodClicked index ->
             let
-                newList =
-                    case LE.findIndex (Tuple.second >> (==) food) model.selectedFoods of
-                        Just index ->
-                            LE.removeAt index model.selectedFoods
-
-                        Nothing ->
-                            model.selectedFoods
+                newFoods =
+                    LE.removeIfIndex ((==) index) model.selectedFoods
             in
             ( { model
-                | selectedFoods = newList
+                | selectedFoods = newFoods
                 , openOverlay = Nothing
               }
             , Cmd.none
@@ -153,6 +151,29 @@ update msg model =
             in
             ( { model | openOverlay = newOpenOverlay }, Cmd.none )
 
+        FoodWeightPicked weight index ->
+            let
+                newSelectedFoods =
+                    LE.updateIfIndex ((==) index)
+                        (Tuple.mapFirst (\_ -> weight))
+                        model.selectedFoods
+            in
+            ( { model | selectedFoods = newSelectedFoods }, Cmd.none )
+
+        FoodWeightEdited inputValue index ->
+            case String.toInt inputValue of
+                Just weight ->
+                    let
+                        newSelectedFoods =
+                            LE.updateIfIndex ((==) index)
+                                (Tuple.mapFirst (\_ -> weight))
+                                model.selectedFoods
+                    in
+                    ( { model | selectedFoods = newSelectedFoods }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -171,15 +192,19 @@ viewNutrientPctg num food =
     toFixed 1 (num / Food.totalGrams food * 100) ++ "%"
 
 
-viewMealGrams : (Food.Food -> Float) -> List ( Int, Food.Food ) -> String
-viewMealGrams getter foods =
+viewMealGrams : (Food.Food -> Float) -> Float -> List ( Int, Food.Food ) -> Html Msg
+viewMealGrams getter threshold foods =
     let
-        str =
+        totalGrams =
             List.map (\( grams, food ) -> toFloat grams * getter food / 100) foods
                 |> List.sum
-                |> toFixed 1
     in
-    str ++ "g"
+    div
+        [ class "font-medium"
+        , VH.attrIf (totalGrams <= threshold) <| class "text-indigo-700"
+        , VH.attrIf (totalGrams > threshold) <| class "text-red-500"
+        ]
+        [ text <| toFixed 1 totalGrams ++ "g" ]
 
 
 view : Model -> Browser.Document Msg
@@ -298,7 +323,7 @@ viewFoodsList searchTerm foods =
                                 li
                                     [ class "py-2 pl-2 text-lg cursor-pointer font-italics"
                                     , class "hover:bg-gray-100 active:bg-gray-100"
-                                    , onClick <| FoodClicked item
+                                    , onClick <| FoodSelected item
                                     ]
                                     (Mark.mark searchTerm item.name)
                             )
@@ -346,9 +371,9 @@ viewFoodItem maybeOpenIndex index ( grams, food ) =
         , viewFoodOverlay
             { open = isOpen
             , onOverlayClick = OverlayClicked index
-            , onDelete = DeleteFoodClicked food
-            , food = food
+            , onDelete = DeleteFoodClicked index
             , grams = grams
+            , index = index
             }
         ]
 
@@ -357,11 +382,11 @@ viewFoodOverlay :
     { open : Bool
     , onOverlayClick : Msg
     , onDelete : Msg
-    , food : Food.Food
     , grams : Int
+    , index : Int
     }
     -> Html Msg
-viewFoodOverlay { open, onOverlayClick, onDelete, grams, food } =
+viewFoodOverlay { open, onOverlayClick, onDelete, grams, index } =
     div
         [ class "absolute flex-1 w-full h-full"
         , class "overflow-hidden text-white rounded-l"
@@ -377,7 +402,7 @@ viewFoodOverlay { open, onOverlayClick, onDelete, grams, food } =
                     ]
                     [ Icons.chevronLeft ]
                 ]
-            , viewGramPicker grams
+            , viewGramPicker grams index
             , button
                 [ class "w-6 mr-2 text-gray-400"
                 , class "cursor-pointer hover:text-gray-600"
@@ -388,8 +413,8 @@ viewFoodOverlay { open, onOverlayClick, onDelete, grams, food } =
         ]
 
 
-viewGramPicker : Int -> Html Msg
-viewGramPicker grams =
+viewGramPicker : Int -> Int -> Html Msg
+viewGramPicker grams index =
     let
         buttonClasses =
             "w-12 bg-gray-500 "
@@ -399,17 +424,20 @@ viewGramPicker grams =
             [ type_ "button"
             , class buttonClasses
             , class "rounded-l-md"
+            , onClick <| FoodWeightPicked (grams + 5) index
             ]
             [ text "+" ]
         , input
             [ class "w-16 text-center text-gray-700"
             , value (String.fromInt grams)
             , type_ "number"
+            , onInput <| \inputValue -> FoodWeightEdited inputValue index
             ]
             []
         , button
             [ class buttonClasses
             , class "rounded-r-md"
+            , onClick <| FoodWeightPicked (grams - 5) index
             ]
             [ text "-" ]
         ]
@@ -417,26 +445,36 @@ viewGramPicker grams =
 
 viewTotalNutrientsHeader : Model -> Float -> Html Msg
 viewTotalNutrientsHeader model mealPctg =
+    let
+        proteinTarget =
+            totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein
+
+        fatTarget =
+            totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat
+
+        carbsTarget =
+            totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs
+    in
     div [ class "mt-2 text-2xl text-center bg-white" ]
         [ span [ class "text-sm tracking-widest uppercase" ] [ text "Target calories" ]
         , div [ class "flex pr-8" ]
             [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [] [ text "Protein" ]
-                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein), text "g" ]
+                , span [] [ text <| toFixed 2 proteinTarget, text "g" ]
                 , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
-                , span [ class "font-medium text-indigo-700" ] [ text (viewMealGrams .protein model.selectedFoods) ]
+                , viewMealGrams .protein proteinTarget model.selectedFoods
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [ class "text-sm" ] [ text "Fat" ]
-                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat), text "g" ]
+                , span [] [ text <| toFixed 2 fatTarget, text "g" ]
                 , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
-                , span [ class "font-medium text-indigo-700" ] [ text (viewMealGrams .fat model.selectedFoods) ]
+                , viewMealGrams .fat fatTarget model.selectedFoods
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm" ]
                 [ span [] [ text "Carbs" ]
-                , span [] [ text <| toFixed 2 (totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs), text "g" ]
+                , span [] [ text <| toFixed 2 carbsTarget, text "g" ]
                 , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
-                , span [ class "font-medium text-indigo-700" ] [ text (viewMealGrams .carbs model.selectedFoods) ]
+                , viewMealGrams .carbs carbsTarget model.selectedFoods
                 ]
             ]
         ]
