@@ -432,9 +432,9 @@ viewGramPicker : Int -> Int -> Html Msg
 viewGramPicker grams index =
     let
         buttonClasses =
-            "w-12 bg-gray-500 "
+            "w-12 bg-gray-500 hover:bg-gray-700 active:bg-gray-700"
     in
-    div [ class "flex px-2" ]
+    div [ class "flex px-2 shadow-md" ]
         [ button
             [ type_ "button"
             , class buttonClasses
@@ -443,7 +443,7 @@ viewGramPicker grams index =
             ]
             [ text "-" ]
         , input
-            [ class "w-16 text-center text-gray-700"
+            [ class "w-16 text-center text-gray-700 appearance-none"
             , value (String.fromInt grams)
             , type_ "number"
             , onInput <| \inputValue -> FoodWeightEdited inputValue index
