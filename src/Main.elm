@@ -79,7 +79,7 @@ init json =
 type Msg
     = Increment
     | Decrement
-    | FoodAdded
+    | AddButtonClicked
     | DialogCancelled
     | SearchChanged String
     | FoodSelected Food.Food
@@ -99,7 +99,7 @@ update msg model =
         Decrement ->
             ( { model | count = model.count - 1 }, Cmd.none )
 
-        FoodAdded ->
+        AddButtonClicked ->
             ( { model
                 | showFoods = True
                 , openOverlay = Maybe.map ((+) 1) model.openOverlay
@@ -115,7 +115,7 @@ update msg model =
 
         FoodSelected food ->
             ( { model
-                | selectedFoods = ( 10, food ) :: model.selectedFoods
+                | selectedFoods = model.selectedFoods ++ [ ( 10, food ) ]
                 , showFoods = False
                 , searchTerm = ""
                 , openOverlay = Nothing
@@ -239,7 +239,7 @@ view model =
                     , button
                         [ class "bottom-0 w-16 h-16 mx-auto mb-2 bg-white rounded-full"
                         , class "text-indigo-600 shadow-lg hover:text-indigo-800"
-                        , onClick FoodAdded
+                        , onClick AddButtonClicked
                         ]
                         [ Icons.addSolid ]
                     , VH.dialog
