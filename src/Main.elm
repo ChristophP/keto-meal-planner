@@ -12,7 +12,7 @@ import Json.Decode as JD
 import List.Extra as LE
 import String.Mark as Mark
 import Task
-import Util exposing (toFixed)
+import Util exposing (toFixed, toPercentage)
 import View.Helpers as VH
 import View.Icons as Icons
 
@@ -217,6 +217,37 @@ viewMealGrams getter threshold foods =
         , VH.attrIf (totalGrams > threshold) <| class "text-red-500"
         ]
         [ text <| toFixed 1 totalGrams ++ "g" ]
+
+
+viewMealPercentage : (Food.Food -> Float) -> Float -> List ( Int, Food.Food ) -> Html Msg
+viewMealPercentage getter threshold foods =
+    let
+        totalGrams =
+            List.map (\( grams, food ) -> toFloat grams * getter food / 100) foods
+                |> List.sum
+
+        totalMealGrams =
+            List.map
+                (\( grams, food ) ->
+                    (toFloat grams
+                        * food.protein
+                        + toFloat grams
+                        * food.fat
+                        + toFloat grams
+                        * food.carbs
+                    )
+                        / 100
+                )
+                foods
+                |> List.sum
+    in
+    div
+        [ class "font-medium"
+        , VH.attrIf (totalGrams <= threshold) <| class "text-indigo-700"
+        , VH.attrIf (totalGrams > threshold) <| class "text-red-500"
+        ]
+        -- avoid dividing by 0
+        [ text <| toPercentage (totalGrams / totalMealGrams) ]
 
 
 view : Model -> Browser.Document Msg
@@ -462,14 +493,17 @@ viewGramPicker grams index =
 viewTotalNutrientsHeader : Model -> Float -> Html Msg
 viewTotalNutrientsHeader model mealPctg =
     let
+        mealCalories =
+            totalAllowedCalories * mealPctg
+
         proteinTarget =
-            totalAllowedCalories * targetNutritionRatio.protein * mealPctg / caloriesPerGram.protein
+            mealCalories * targetNutritionRatio.protein / caloriesPerGram.protein
 
         fatTarget =
-            totalAllowedCalories * targetNutritionRatio.fat * mealPctg / caloriesPerGram.fat
+            mealCalories * targetNutritionRatio.fat / caloriesPerGram.fat
 
         carbsTarget =
-            totalAllowedCalories * targetNutritionRatio.carbs * mealPctg / caloriesPerGram.carbs
+            mealCalories * targetNutritionRatio.carbs / caloriesPerGram.carbs
     in
     div [ class "mt-2 text-2xl text-center bg-white" ]
         [ span [ class "text-sm tracking-widest uppercase" ] [ text "Target calories" ]
@@ -477,20 +511,23 @@ viewTotalNutrientsHeader model mealPctg =
             [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [] [ text "Protein" ]
                 , span [] [ text <| toFixed 2 proteinTarget, text "g" ]
-                , span [] [ text (String.fromFloat (targetNutritionRatio.protein * 100) ++ "%") ]
+                , span [] [ text (toPercentage targetNutritionRatio.protein) ]
                 , viewMealGrams .protein proteinTarget model.selectedFoods
+                , viewMealPercentage .protein proteinTarget model.selectedFoods
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [ class "text-sm" ] [ text "Fat" ]
                 , span [] [ text <| toFixed 2 fatTarget, text "g" ]
-                , span [] [ text (String.fromFloat (targetNutritionRatio.fat * 100) ++ "%") ]
+                , span [] [ text (toPercentage targetNutritionRatio.fat) ]
                 , viewMealGrams .fat fatTarget model.selectedFoods
+                , viewMealPercentage .fat fatTarget model.selectedFoods
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm" ]
                 [ span [] [ text "Carbs" ]
                 , span [] [ text <| toFixed 2 carbsTarget, text "g" ]
-                , span [] [ text (String.fromFloat (targetNutritionRatio.carbs * 100) ++ "%") ]
+                , span [] [ text (toPercentage targetNutritionRatio.carbs) ]
                 , viewMealGrams .carbs carbsTarget model.selectedFoods
+                , viewMealPercentage .carbs carbsTarget model.selectedFoods
                 ]
             ]
         ]

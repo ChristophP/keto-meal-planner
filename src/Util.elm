@@ -14,3 +14,8 @@ toFixed digits num =
             modBy factor int
     in
     String.fromInt (int // factor) ++ "." ++ String.fromInt decimals
+
+
+toPercentage : Float -> String
+toPercentage num =
+    toFixed 1 (num * 100) ++ "%"
