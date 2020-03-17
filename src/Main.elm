@@ -6,7 +6,7 @@ import Data.Food as Food
 import Data.Meal as Meal
 import Dict exposing (Dict)
 import Html exposing (Html, button, div, input, li, ol, p, span, text, ul)
-import Html.Attributes exposing (class, classList, id, placeholder, style, type_, value)
+import Html.Attributes exposing (class, classList, disabled, id, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
 import List.Extra as LE
@@ -440,6 +440,7 @@ viewGramPicker grams index =
             , class buttonClasses
             , class "rounded-l-md"
             , onClick <| FoodWeightPicked (grams - 5) index
+            , disabled (grams - 5 < 0)
             ]
             [ text "-" ]
         , input
