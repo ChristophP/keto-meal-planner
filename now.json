@@ -1,20 +1,30 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "dist/**",
-      "use": "@now/static"
-    }
-  ],
   "alias": "keto-planner.deedop.de",
-  "routes": [
+  "headers": [
     {
-      "src": "^/[^.]+$",
-      "dest": "/dist/index.html"
+      "source": "^/(.+?\\.[a-f0-9]{8}\\..+)$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
