@@ -41,8 +41,8 @@ dialog { show, title, content, onClose } =
             ]
             []
         , div
-            [ class "z-10 flex flex-col w-full h-full bg-white rounded-lg shadow-md"
-            , class "transition-transform duration-500"
+            [ class "z-10 flex flex-col w-full h-full max-w-screen-sm"
+            , class "bg-white rounded-lg shadow-md transition-transform duration-500"
             , attrIf (not show) <| style "transform" "translateY(-100vh)"
             ]
             [ div [ class "relative flex items-center justify-center py-2 text-xl border-b border-gray-400" ]

@@ -1,25 +1,22 @@
 @tailwind base;
 
 /* my resets */
-html {
-  font-size: 18px;
-  @apply .bg-gray-200 .text-gray-800 .font-sans;
-}
-
 body {
-  @apply .w-screen .h-screen .flex .flex-col
+  font-size: 18px;
+  @apply font-sans text-gray-800 bg-gray-400;
+  @apply flex flex-col w-screen h-screen;
 }
 
 hr {
-  @apply .border-b .my-4;
+  @apply my-4 border-b;
 }
 
 :disabled {
-  @apply .opacity-50;
+  @apply opacity-50;
 }
 
 input::placeholder {
-  @apply .font-light;
+  @apply font-light;
 }
 
 svg {

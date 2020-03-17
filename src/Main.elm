@@ -232,7 +232,7 @@ view model =
                     0
     in
     Browser.Document "Keto Meal Planner"
-        [ div [ class "flex flex-col w-full h-full" ] <|
+        [ div [ class "flex flex-col w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
             case model.foods of
                 Ok foods ->
                     [ VH.slider
@@ -444,9 +444,9 @@ viewGramPicker grams index =
             ]
             [ text "-" ]
         , input
-            [ class "w-16 text-center text-gray-700 appearance-none"
+            [ class "w-16 text-center text-gray-700"
             , value (String.fromInt grams)
-            , type_ "number"
+            , type_ "text"
             , onInput <| \inputValue -> FoodWeightEdited inputValue index
             ]
             []
