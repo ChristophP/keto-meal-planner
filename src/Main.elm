@@ -120,7 +120,7 @@ update msg model =
                 , searchTerm = ""
                 , openOverlay = Nothing
               }
-            , Cmd.none
+            , scrollToBottom contentBodyId
             )
 
         DeleteFoodClicked index ->
@@ -182,9 +182,21 @@ update msg model =
 -- VIEW
 
 
+scrollToBottom : String -> Cmd Msg
+scrollToBottom id =
+    Dom.getViewportOf id
+        |> Task.andThen (\info -> Dom.setViewportOf id 0 info.scene.height)
+        |> Task.attempt (\_ -> NoOp)
+
+
 foodSearchId : String
 foodSearchId =
     "food-search"
+
+
+contentBodyId : String
+contentBodyId =
+    "content-body"
 
 
 viewNutrientPctg : Float -> Food.Food -> String
@@ -229,7 +241,10 @@ view model =
                         , onNext = Increment
                         , index = model.count
                         }
-                    , div [ class "flex-1 overflow-y-auto" ]
+                    , div
+                        [ class "flex-1 overflow-y-auto smooth-scroll"
+                        , id contentBodyId
+                        ]
                         [ viewTotalNutrientsHeader model mealPctg
                         , ol [ class "mt-4 text-2xl text-center" ] <|
                             List.indexedMap

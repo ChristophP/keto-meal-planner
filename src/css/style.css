@@ -37,6 +37,10 @@ svg {
 
 /* put custom utilities here */
 
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
 .height-minus-header-and-footer {
   min-height: calc(100vh - 4.717rem - 1.6rem);
 }
