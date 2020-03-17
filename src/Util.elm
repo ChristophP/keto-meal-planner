@@ -13,7 +13,15 @@ toFixed digits num =
         decimals =
             modBy factor int
     in
-    String.fromInt (int // factor) ++ "." ++ String.fromInt decimals
+    String.fromInt (int // factor)
+        ++ "."
+        ++ String.fromInt
+            (if isNaN (toFloat decimals) then
+                0
+
+             else
+                decimals
+            )
 
 
 toPercentage : Float -> String
