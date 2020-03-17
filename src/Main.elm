@@ -424,9 +424,9 @@ viewGramPicker grams index =
             [ type_ "button"
             , class buttonClasses
             , class "rounded-l-md"
-            , onClick <| FoodWeightPicked (grams + 5) index
+            , onClick <| FoodWeightPicked (grams - 5) index
             ]
-            [ text "+" ]
+            [ text "-" ]
         , input
             [ class "w-16 text-center text-gray-700"
             , value (String.fromInt grams)
@@ -437,9 +437,9 @@ viewGramPicker grams index =
         , button
             [ class buttonClasses
             , class "rounded-r-md"
-            , onClick <| FoodWeightPicked (grams - 5) index
+            , onClick <| FoodWeightPicked (grams + 5) index
             ]
-            [ text "-" ]
+            [ text "+" ]
         ]
 
 
