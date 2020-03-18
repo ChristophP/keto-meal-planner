@@ -1,4 +1,26 @@
 {
+  "Teigwaren": [
+    {
+      "Name": "Pastazauber",
+      "PER": 100,
+      "Eiweiß": 6.7,
+      "FETT": 0.6,
+      "Kohlehy.": 5.1,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Pizzateig",
+      "PER": 100,
+      "Eiweiß": 10.3,
+      "FETT": 0.9,
+      "Kohlehy.": 7.8,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    }
+  ],
   "Gemüse": [
     {
       "Name": "Auberginen, roh",
@@ -773,6 +795,16 @@
       "Ballaststoffe(mg)": 0
     },
     {
+      "Name": "Trockenerdbeeren",
+      "PER": 100,
+      "Eiweiß": 7.6,
+      "FETT": 50.6,
+      "Kohlehy.": 3.7,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
       "Name": "Ei",
       "PER": 100,
       "Eiweiß": 12.9,
@@ -1187,6 +1219,16 @@
       "Ballaststoffe(mg)": 0
     },
     {
+      "Name": "Teewurst",
+      "PER": 100,
+      "Eiweiß": 13,
+      "FETT": 39,
+      "Kohlehy.": 0.5,
+      "Cholesterin(mg)": 80,
+      "Natrium(mg)": 1400,
+      "Ballaststoffe(mg)": 0
+    },
+    {
       "Name": "Weißwurst",
       "PER": 100,
       "Eiweiß": 11.1,
@@ -1439,9 +1481,18 @@
       "Cholesterin(mg)": 0,
       "Natrium(mg)": 0,
       "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Nukete",
+      "PER": 100,
+      "Eiweiß": 11.5,
+      "FETT": 69.8,
+      "Kohlehy.": 4.0,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
     }
   ],
-  "KetoVie Vanille": [],
   "Pflanzliche Drinks, kh-arm/frei": [
     {
       "Name": "Cashewmilch, ungesüßt, Provamel",
@@ -2016,6 +2067,16 @@
       "Ballaststoffe(mg)": 0
     },
     {
+      "Name": "Camenbert, ALDI",
+      "PER": 100,
+      "Eiweiß": 13,
+      "FETT": 44,
+      "Kohlehy.": 0.1,
+      "Cholesterin(mg)": 93,
+      "Natrium(mg)": 994,
+      "Ballaststoffe(mg)": 0
+    },
+    {
       "Name": "Camembert, 60%ig",
       "PER": 100,
       "Eiweiß": 16.8,
@@ -2345,6 +2406,16 @@
       "Eiweiß": 8,
       "FETT": 37.6,
       "Kohlehy.": 10,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Aubergine Streichcreme",
+      "PER": 100,
+      "Eiweiß": 5.4,
+      "FETT": 34,
+      "Kohlehy.": 5.2,
       "Cholesterin(mg)": 0,
       "Natrium(mg)": 0,
       "Ballaststoffe(mg)": 0
