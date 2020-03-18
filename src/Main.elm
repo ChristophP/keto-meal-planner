@@ -211,7 +211,7 @@ viewMealGrams getter foods =
             List.map (\( grams, food ) -> toFloat grams * getter food / 100) foods
                 |> List.sum
     in
-    div
+    span
         [ class "font-medium text-indigo-700"
         ]
         [ text <| toFixed 1 totalGrams ++ "g" ]
@@ -245,7 +245,7 @@ viewMealPercentage getter threshold foods =
         ratioGood =
             abs (ratio - threshold) < 0.05
     in
-    div
+    span
         [ class "font-medium"
         , VH.attrIf ratioGood <| class "text-indigo-700"
         , VH.attrIf (not ratioGood) <| class "text-red-500"
@@ -513,24 +513,42 @@ viewTotalNutrientsHeader model mealPctg =
         , div [ class "flex pr-8" ]
             [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [] [ text "Protein" ]
-                , span [] [ text <| toFixed 2 proteinTarget, text "g" ]
-                , viewMealGrams .protein model.selectedFoods
-                , span [] [ text (toPercentage targetNutritionRatio.protein) ]
-                , viewMealPercentage .protein targetNutritionRatio.protein model.selectedFoods
+                , span []
+                    [ viewMealGrams .protein model.selectedFoods
+                    , text " / "
+                    , text <| toFixed 2 proteinTarget ++ "g"
+                    ]
+                , span []
+                    [ viewMealPercentage .protein targetNutritionRatio.protein model.selectedFoods
+                    , text " / "
+                    , text (toPercentage targetNutritionRatio.protein)
+                    ]
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [ class "text-sm" ] [ text "Fat" ]
-                , span [] [ text <| toFixed 2 fatTarget, text "g" ]
-                , viewMealGrams .fat model.selectedFoods
-                , span [] [ text (toPercentage targetNutritionRatio.fat) ]
-                , viewMealPercentage .fat targetNutritionRatio.fat model.selectedFoods
+                , span []
+                    [ viewMealGrams .fat model.selectedFoods
+                    , text " / "
+                    , text <| toFixed 2 fatTarget ++ "g"
+                    ]
+                , span []
+                    [ viewMealPercentage .fat targetNutritionRatio.fat model.selectedFoods
+                    , text " / "
+                    , text (toPercentage targetNutritionRatio.fat)
+                    ]
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm" ]
                 [ span [] [ text "Carbs" ]
-                , span [] [ text <| toFixed 2 carbsTarget, text "g" ]
-                , viewMealGrams .carbs model.selectedFoods
-                , span [] [ text (toPercentage targetNutritionRatio.carbs) ]
-                , viewMealPercentage .carbs targetNutritionRatio.carbs model.selectedFoods
+                , span []
+                    [ viewMealGrams .carbs model.selectedFoods
+                    , text " / "
+                    , text <| toFixed 2 carbsTarget ++ "g"
+                    ]
+                , span []
+                    [ viewMealPercentage .carbs targetNutritionRatio.carbs model.selectedFoods
+                    , text " / "
+                    , text (toPercentage targetNutritionRatio.carbs)
+                    ]
                 ]
             ]
         ]
