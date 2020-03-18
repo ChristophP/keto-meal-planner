@@ -478,7 +478,7 @@ viewGramPicker grams index =
             ]
             [ text "-" ]
         , input
-            [ class "w-16 text-center text-gray-700"
+            [ class "w-16 text-center text-gray-700 rounded-none"
             , value (String.fromInt grams)
             , type_ "text"
             , onInput <| \inputValue -> FoodWeightEdited inputValue index
