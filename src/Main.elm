@@ -514,22 +514,22 @@ viewTotalNutrientsHeader model mealPctg =
             [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [] [ text "Protein" ]
                 , span [] [ text <| toFixed 2 proteinTarget, text "g" ]
-                , span [] [ text (toPercentage targetNutritionRatio.protein) ]
                 , viewMealGrams .protein model.selectedFoods
+                , span [] [ text (toPercentage targetNutritionRatio.protein) ]
                 , viewMealPercentage .protein targetNutritionRatio.protein model.selectedFoods
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [ class "text-sm" ] [ text "Fat" ]
                 , span [] [ text <| toFixed 2 fatTarget, text "g" ]
-                , span [] [ text (toPercentage targetNutritionRatio.fat) ]
                 , viewMealGrams .fat model.selectedFoods
+                , span [] [ text (toPercentage targetNutritionRatio.fat) ]
                 , viewMealPercentage .fat targetNutritionRatio.fat model.selectedFoods
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm" ]
                 [ span [] [ text "Carbs" ]
                 , span [] [ text <| toFixed 2 carbsTarget, text "g" ]
-                , span [] [ text (toPercentage targetNutritionRatio.carbs) ]
                 , viewMealGrams .carbs model.selectedFoods
+                , span [] [ text (toPercentage targetNutritionRatio.carbs) ]
                 , viewMealPercentage .carbs targetNutritionRatio.carbs model.selectedFoods
                 ]
             ]
