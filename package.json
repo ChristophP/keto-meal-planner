@@ -18,6 +18,13 @@
     "elm-hot": "^1.1.4",
     "node-elm-compiler": "^5.0.4",
     "parcel-bundler": "^1.12.4",
+    "parcel-plugin-precache-manifest": "^3.0.2",
     "tailwindcss": "^1.2.0"
+  },
+  "dependencies": {
+    "now": "^17.0.4"
+  },
+  "precacheManifest": {
+    "inject-into": "sw.js"
   }
 }
