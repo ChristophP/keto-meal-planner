@@ -1,10 +1,13 @@
 @tailwind base;
 
 /* my resets */
+html, body {
+  @apply h-full;
+}
+
 body {
   font-size: 18px;
-  @apply font-sans text-gray-800 bg-gray-400;
-  @apply flex flex-col w-screen h-screen;
+  @apply flex flex-col font-sans text-gray-800 bg-gray-400;
 }
 
 hr {
