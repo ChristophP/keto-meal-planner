@@ -1,6 +1,7 @@
 {
   "name": "Keto Meal Planner",
   "short_name": "Keto Planner",
+  "description": "A planner to make the keto diet easy",
   "icons": [
     {
       "src": "./assets/icons/android-chrome-192x192.png",
