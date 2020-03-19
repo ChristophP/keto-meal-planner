@@ -1,4 +1,16 @@
 {
+  "Oligo-antigene Diät": [
+    {
+      "Name": "Weltmeister Brot",
+      "PER": 100,
+      "Eiweiß": 12.4,
+      "FETT": 9.2,
+      "Kohlehy.": 0.2,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    }
+  ],
   "Teigwaren": [
     {
       "Name": "Pastazauber",
