@@ -5,9 +5,7 @@ const cacheName = `precache-version-${manifest.ver}`;
 const precache = () =>
   caches
     .open(cacheName)
-    .then(cache => {
-      return cache.addAll(manifest.files);
-    })
+    .then(cache => cache.addAll(manifest.files))
     .then(() => self.skipWaiting());
 
 const cleanCache = () =>
