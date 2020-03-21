@@ -2,45 +2,48 @@
 const manifest = self.__precacheManifest;
 const cacheName = `precache-version-${manifest.ver}`;
 
+const precache = () =>
+  caches
+    .open(cacheName)
+    .then(cache => {
+      return cache.addAll(manifest.files);
+    })
+    .then(() => self.skipWaiting());
+
+const cleanCache = () =>
+  caches
+    .keys()
+    .then(cacheNames =>
+      Promise.all(
+        cacheNames.map(name =>
+          name !== cacheName ? caches.delete(name) : Promise.resolve()
+        )
+      )
+    )
+    .then(() => self.clients.claim());
+
+const handleRequests = request =>
+  caches.open(cacheName).then(cache => {
+    const newRequest = request.mode === "navigate" ? "/" : request;
+    return fetch(newRequest)
+      .then(response => {
+        cache.put(newRequest, response.clone());
+        return response;
+      })
+      .catch(() => cache.match(newRequest));
+  });
+
 // install and precache
 self.addEventListener("install", event => {
-  event.waitUntil(
-    caches
-      .open(cacheName)
-      .then(cache => {
-        return cache.addAll(manifest.files);
-      })
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(precache());
 });
 
 // remove old caches and claim clients
 self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches
-      .keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(name =>
-            name !== cacheName ? caches.delete(name) : Promise.resolve()
-          )
-        );
-      })
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil(cleanCache());
 });
 
 // handle requests
 self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.open(cacheName).then(cache => {
-      const request = event.request.mode === "navigate" ? "/" : event.request;
-      return fetch(request)
-        .then(response => {
-          cache.put(event.request, response.clone());
-          return response;
-        })
-        .catch(() => cache.match(request));
-    })
-  );
+  event.respondWith(handleRequests(event.request));
 });
