@@ -39,10 +39,6 @@ targetNutritionRatio =
     { protein = 0.08, fat = 0.84, carbs = 0.08 }
 
 
-caloriesPerGram =
-    { protein = 4, fat = 9, carbs = 4 }
-
-
 type alias Foods =
     Result String (Dict String (List Food.Food))
 
@@ -201,46 +197,36 @@ contentBodyId =
 
 viewNutrientPctg : Float -> Food.Food -> String
 viewNutrientPctg num food =
-    toFixed 1 (num / Food.totalGrams food * 100) ++ "%"
+    toFixed 1 (num / Food.totalNutrientWeightPer100grams food * 100) ++ "%"
 
 
-viewMealGrams : (Food.Food -> Float) -> List ( Int, Food.Food ) -> Html Msg
-viewMealGrams getter foods =
+viewMealGrams : Food.Nutrient -> List ( Int, Food.Food ) -> Html Msg
+viewMealGrams nutrient foods =
     let
         totalGrams =
-            List.map (\( grams, food ) -> toFloat grams * getter food / 100) foods
+            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) foods
                 |> List.sum
     in
     span
-        [ class "font-medium text-indigo-700"
-        ]
+        [ class "font-medium text-indigo-700" ]
         [ text <| toFixed 1 totalGrams ++ "g" ]
 
 
-viewMealPercentage : (Food.Food -> Float) -> Float -> List ( Int, Food.Food ) -> Html Msg
-viewMealPercentage getter threshold foods =
+viewMealPercentage : Food.Nutrient -> Float -> List ( Int, Food.Food ) -> Html Msg
+viewMealPercentage nutrient threshold foods =
     let
-        totalGrams =
-            List.map (\( grams, food ) -> toFloat grams * getter food / 100) foods
+        caloriesFromNutrient =
+            List.map (\( grams, food ) -> Food.getNutrientCalories nutrient (toFloat grams) food) foods
                 |> List.sum
 
-        totalMealGrams =
+        mealCalories =
             List.map
-                (\( grams, food ) ->
-                    (toFloat grams
-                        * food.protein
-                        + toFloat grams
-                        * food.fat
-                        + toFloat grams
-                        * food.carbs
-                    )
-                        / 100
-                )
+                (\( grams, food ) -> Food.getCalories (toFloat grams) food)
                 foods
                 |> List.sum
 
         ratio =
-            totalGrams / totalMealGrams
+            caloriesFromNutrient / mealCalories
 
         ratioGood =
             abs (ratio - threshold) < 0.05
@@ -500,13 +486,13 @@ viewTotalNutrientsHeader model mealPctg =
             totalAllowedCalories * mealPctg
 
         proteinTarget =
-            mealCalories * targetNutritionRatio.protein / caloriesPerGram.protein
+            mealCalories * targetNutritionRatio.protein / Food.caloriesPerGram.protein
 
         fatTarget =
-            mealCalories * targetNutritionRatio.fat / caloriesPerGram.fat
+            mealCalories * targetNutritionRatio.fat / Food.caloriesPerGram.fat
 
         carbsTarget =
-            mealCalories * targetNutritionRatio.carbs / caloriesPerGram.carbs
+            mealCalories * targetNutritionRatio.carbs / Food.caloriesPerGram.carbs
     in
     div [ class "mt-2 text-2xl text-center bg-white" ]
         [ span [ class "text-sm tracking-widest uppercase" ] [ text "Target calories" ]
@@ -514,12 +500,12 @@ viewTotalNutrientsHeader model mealPctg =
             [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [] [ text "Protein" ]
                 , span []
-                    [ viewMealGrams .protein model.selectedFoods
+                    [ viewMealGrams Food.Protein model.selectedFoods
                     , text " / "
                     , text <| toFixed 2 proteinTarget ++ "g"
                     ]
                 , span []
-                    [ viewMealPercentage .protein targetNutritionRatio.protein model.selectedFoods
+                    [ viewMealPercentage Food.Protein targetNutritionRatio.protein model.selectedFoods
                     , text " / "
                     , text (toPercentage targetNutritionRatio.protein)
                     ]
@@ -527,12 +513,12 @@ viewTotalNutrientsHeader model mealPctg =
             , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [ class "text-sm" ] [ text "Fat" ]
                 , span []
-                    [ viewMealGrams .fat model.selectedFoods
+                    [ viewMealGrams Food.Fat model.selectedFoods
                     , text " / "
                     , text <| toFixed 2 fatTarget ++ "g"
                     ]
                 , span []
-                    [ viewMealPercentage .fat targetNutritionRatio.fat model.selectedFoods
+                    [ viewMealPercentage Food.Fat targetNutritionRatio.fat model.selectedFoods
                     , text " / "
                     , text (toPercentage targetNutritionRatio.fat)
                     ]
@@ -540,12 +526,12 @@ viewTotalNutrientsHeader model mealPctg =
             , div [ class "flex flex-col flex-1 p-2 text-sm" ]
                 [ span [] [ text "Carbs" ]
                 , span []
-                    [ viewMealGrams .carbs model.selectedFoods
+                    [ viewMealGrams Food.Carbs model.selectedFoods
                     , text " / "
                     , text <| toFixed 2 carbsTarget ++ "g"
                     ]
                 , span []
-                    [ viewMealPercentage .carbs targetNutritionRatio.carbs model.selectedFoods
+                    [ viewMealPercentage Food.Carbs targetNutritionRatio.carbs model.selectedFoods
                     , text " / "
                     , text (toPercentage targetNutritionRatio.carbs)
                     ]
