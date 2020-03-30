@@ -49,7 +49,7 @@ type alias Model =
     , foods : Foods
     , searchTerm : String
     , selectedFoods : List ( Int, Food.Food )
-    , openOverlay : Maybe Int
+    , openOverlay : Maybe String
     }
 
 
@@ -79,27 +79,27 @@ type Msg
     | DialogCancelled
     | SearchChanged String
     | FoodSelected Food.Food
-    | DeleteFoodClicked Int
-    | OverlayClicked Int
-    | FoodWeightPicked Int Int
-    | FoodWeightEdited String Int
+    | DeleteFoodClicked String
+    | OverlayClicked String
+    | FoodWeightPicked Int String
+    | FoodWeightEdited String String
     | NoOp
 
 
-updateOpenOverlay : Int -> Maybe Int -> Maybe Int
-updateOpenOverlay newIndex currentIndex =
-    case currentIndex of
+updateOpenOverlay : String -> Maybe String -> Maybe String
+updateOpenOverlay name openOverlay =
+    case openOverlay of
         -- already open
-        Just index ->
-            if index == newIndex then
+        Just openOverlayName ->
+            if name == openOverlayName then
                 Nothing
 
             else
-                Just newIndex
+                Just name
 
         -- none open yet
         Nothing ->
-            Just newIndex
+            Just name
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -112,10 +112,7 @@ update msg model =
             ( { model | count = model.count - 1 }, Cmd.none )
 
         AddButtonClicked ->
-            ( { model
-                | showFoods = True
-                , openOverlay = Maybe.map ((+) 1) model.openOverlay
-              }
+            ( { model | showFoods = True }
             , Task.attempt (always NoOp) (Dom.focus foodSearchId)
             )
 
@@ -130,17 +127,15 @@ update msg model =
                 | selectedFoods = model.selectedFoods ++ [ ( 10, food ) ]
                 , showFoods = False
                 , searchTerm = ""
-                , openOverlay =
-                    updateOpenOverlay (List.length model.selectedFoods - 1)
-                        model.openOverlay
+                , openOverlay = updateOpenOverlay food.name model.openOverlay
               }
             , scrollToBottom contentBodyId
             )
 
-        DeleteFoodClicked index ->
+        DeleteFoodClicked name ->
             let
                 newFoods =
-                    LE.removeIfIndex ((==) index) model.selectedFoods
+                    List.filter (Tuple.second >> .name >> (/=) name) model.selectedFoods
             in
             ( { model
                 | selectedFoods = newFoods
@@ -149,26 +144,26 @@ update msg model =
             , Cmd.none
             )
 
-        OverlayClicked index ->
-            ( { model | openOverlay = updateOpenOverlay index model.openOverlay }
+        OverlayClicked foodName ->
+            ( { model | openOverlay = updateOpenOverlay foodName model.openOverlay }
             , Cmd.none
             )
 
-        FoodWeightPicked weight index ->
+        FoodWeightPicked weight name ->
             let
                 newSelectedFoods =
-                    LE.updateIfIndex ((==) index)
+                    LE.updateIf (Tuple.second >> .name >> (==) name)
                         (Tuple.mapFirst (\_ -> weight))
                         model.selectedFoods
             in
             ( { model | selectedFoods = newSelectedFoods }, Cmd.none )
 
-        FoodWeightEdited inputValue index ->
+        FoodWeightEdited inputValue name ->
             case String.toInt inputValue of
                 Just weight ->
                     let
                         newSelectedFoods =
-                            LE.updateIfIndex ((==) index)
+                            LE.updateIf (Tuple.second >> .name >> (==) name)
                                 (Tuple.mapFirst (\_ -> weight))
                                 model.selectedFoods
                     in
@@ -274,7 +269,7 @@ view model =
                         ]
                         [ viewTotalNutrientsHeader model mealPctg
                         , ol [ class "mt-4 text-2xl text-center" ] <|
-                            List.indexedMap
+                            List.map
                                 (viewFoodItem model.openOverlay)
                                 model.selectedFoods
                         ]
@@ -375,13 +370,13 @@ viewFoodsList searchTerm foods =
             pairs
 
 
-viewFoodItem : Maybe Int -> Int -> ( Int, Food.Food ) -> Html Msg
-viewFoodItem maybeOpenIndex index ( grams, food ) =
+viewFoodItem : Maybe String -> ( Int, Food.Food ) -> Html Msg
+viewFoodItem maybeOpenFood ( grams, food ) =
     let
         isOpen =
-            case maybeOpenIndex of
-                Just openIndex ->
-                    openIndex == index
+            case maybeOpenFood of
+                Just foodName ->
+                    foodName == food.name
 
                 Nothing ->
                     False
@@ -412,10 +407,10 @@ viewFoodItem maybeOpenIndex index ( grams, food ) =
             ]
         , viewFoodOverlay
             { open = isOpen
-            , onOverlayClick = OverlayClicked index
-            , onDelete = DeleteFoodClicked index
+            , onOverlayClick = OverlayClicked food.name
+            , onDelete = DeleteFoodClicked food.name
             , grams = grams
-            , index = index
+            , name = food.name
             }
         ]
 
@@ -425,10 +420,10 @@ viewFoodOverlay :
     , onOverlayClick : Msg
     , onDelete : Msg
     , grams : Int
-    , index : Int
+    , name : String
     }
     -> Html Msg
-viewFoodOverlay { open, onOverlayClick, onDelete, grams, index } =
+viewFoodOverlay { open, onOverlayClick, onDelete, grams, name } =
     div
         [ class "absolute flex-1 w-full h-full"
         , class "overflow-hidden text-white rounded-l"
@@ -444,7 +439,7 @@ viewFoodOverlay { open, onOverlayClick, onDelete, grams, index } =
                     ]
                     [ Icons.chevronLeft ]
                 ]
-            , viewGramPicker grams index
+            , viewGramPicker grams name
             , button
                 [ class "w-6 mr-2 text-gray-400"
                 , class "cursor-pointer hover:text-gray-600"
@@ -455,8 +450,8 @@ viewFoodOverlay { open, onOverlayClick, onDelete, grams, index } =
         ]
 
 
-viewGramPicker : Int -> Int -> Html Msg
-viewGramPicker grams index =
+viewGramPicker : Int -> String -> Html Msg
+viewGramPicker grams name =
     let
         buttonClasses =
             "w-12 bg-gray-500 hover:bg-gray-700 active:bg-gray-700"
@@ -466,7 +461,7 @@ viewGramPicker grams index =
             [ type_ "button"
             , class buttonClasses
             , class "rounded-l-md"
-            , onClick <| FoodWeightPicked (grams - 5) index
+            , onClick <| FoodWeightPicked (grams - 5) name
             , disabled (grams - 5 < 0)
             ]
             [ text "-" ]
@@ -474,13 +469,13 @@ viewGramPicker grams index =
             [ class "w-16 text-center text-gray-700 rounded-none"
             , value (String.fromInt grams)
             , type_ "text"
-            , onInput <| \inputValue -> FoodWeightEdited inputValue index
+            , onInput <| \inputValue -> FoodWeightEdited inputValue name
             ]
             []
         , button
             [ class buttonClasses
             , class "rounded-r-md"
-            , onClick <| FoodWeightPicked (grams + 5) index
+            , onClick <| FoodWeightPicked (grams + 5) name
             ]
             [ text "+" ]
         ]
