@@ -130,7 +130,9 @@ update msg model =
                 | selectedFoods = model.selectedFoods ++ [ ( 10, food ) ]
                 , showFoods = False
                 , searchTerm = ""
-                , openOverlay = updateOpenOverlay 0 model.openOverlay
+                , openOverlay =
+                    updateOpenOverlay (List.length model.selectedFoods - 1)
+                        model.openOverlay
               }
             , scrollToBottom contentBodyId
             )
