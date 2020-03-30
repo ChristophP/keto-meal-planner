@@ -86,6 +86,22 @@ type Msg
     | NoOp
 
 
+updateOpenOverlay : Int -> Maybe Int -> Maybe Int
+updateOpenOverlay newIndex currentIndex =
+    case currentIndex of
+        -- already open
+        Just index ->
+            if index == newIndex then
+                Nothing
+
+            else
+                Just newIndex
+
+        -- none open yet
+        Nothing ->
+            Just newIndex
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -114,7 +130,7 @@ update msg model =
                 | selectedFoods = model.selectedFoods ++ [ ( 10, food ) ]
                 , showFoods = False
                 , searchTerm = ""
-                , openOverlay = Nothing
+                , openOverlay = updateOpenOverlay 0 model.openOverlay
               }
             , scrollToBottom contentBodyId
             )
@@ -132,20 +148,9 @@ update msg model =
             )
 
         OverlayClicked index ->
-            let
-                newOpenOverlay =
-                    case model.openOverlay of
-                        Just openIndex ->
-                            if openIndex == index then
-                                Nothing
-
-                            else
-                                Just index
-
-                        Nothing ->
-                            Just index
-            in
-            ( { model | openOverlay = newOpenOverlay }, Cmd.none )
+            ( { model | openOverlay = updateOpenOverlay index model.openOverlay }
+            , Cmd.none
+            )
 
         FoodWeightPicked weight index ->
             let
