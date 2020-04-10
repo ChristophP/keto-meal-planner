@@ -3,7 +3,7 @@ module View.Helpers exposing (attrIf, dialog, inputField, slider)
 import Html exposing (Attribute, Html, button, div, input, li, p, text, ul)
 import Html.Attributes exposing (class, classList, disabled, style)
 import Html.Events exposing (onClick)
-import View.Icons as Icons
+import Zondicons as Icons
 
 
 attrIf : Bool -> Attribute msg -> Attribute msg
@@ -48,7 +48,7 @@ dialog { show, title, content, onClose } =
             [ div [ class "relative flex items-center justify-center py-2 text-xl border-b border-gray-400" ]
                 [ text title
                 , button [ class "absolute right-0 w-4 mr-2", onClick onClose ]
-                    [ Icons.close ]
+                    [ Icons.close [] ]
                 ]
             , div [ class "flex-1 overflow-hidden" ] content
             ]
@@ -73,7 +73,7 @@ slider { onBack, onNext, index, items } =
             , onClick onBack
             , disabled (index <= 0)
             ]
-            [ Icons.chevronLeft ]
+            [ Icons.cheveronLeft [] ]
         , div [ class "flex-1 overflow-hidden" ]
             [ ul
                 [ class "flex items-center flex-full transition-tranform duration-500"
@@ -91,5 +91,5 @@ slider { onBack, onNext, index, items } =
             , onClick onNext
             , disabled (index >= List.length items - 1)
             ]
-            [ Icons.chevronRight ]
+            [ Icons.cheveronRight [] ]
         ]

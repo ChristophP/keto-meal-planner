@@ -14,7 +14,7 @@ import String.Mark as Mark
 import Task
 import Util exposing (toFixed, toPercentage)
 import View.Helpers as VH
-import View.Icons as Icons
+import Zondicons as Icons
 
 
 main : Program JD.Value Model Msg
@@ -278,7 +278,7 @@ view model =
                         , class "text-indigo-600 shadow-lg hover:text-indigo-800"
                         , onClick AddButtonClicked
                         ]
-                        [ Icons.addSolid ]
+                        [ Icons.addSolid [] ]
                     , VH.dialog
                         { show = model.showFoods
                         , title = "Pick Food"
@@ -437,7 +437,7 @@ viewFoodOverlay { open, onOverlayClick, onDelete, grams, name } =
                     [ class "transform"
                     , classList [ ( "rotate-180", open ) ]
                     ]
-                    [ Icons.chevronLeft ]
+                    [ Icons.cheveronLeft [] ]
                 ]
             , viewGramPicker grams name
             , button
@@ -445,7 +445,7 @@ viewFoodOverlay { open, onOverlayClick, onDelete, grams, name } =
                 , class "cursor-pointer hover:text-gray-600"
                 , onClick onDelete
                 ]
-                [ Icons.trash ]
+                [ Icons.trash [] ]
             ]
         ]
 
