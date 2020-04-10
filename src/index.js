@@ -1,4 +1,5 @@
 import {Elm} from './Main.elm'
+import storage from './storage'
 import data from './data.json'
 
 
