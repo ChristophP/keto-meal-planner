@@ -5,7 +5,7 @@ import Browser.Dom as Dom
 import Data.Food as Food
 import Data.Meal as Meal
 import Dict exposing (Dict)
-import Html exposing (Html, button, div, input, li, ol, p, span, text, ul)
+import Html exposing (Html, button, div, footer, header, input, li, ol, p, span, text, ul)
 import Html.Attributes exposing (class, classList, disabled, id, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as JD
@@ -257,14 +257,16 @@ view model =
         [ div [ class "flex flex-col w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
             case model.foods of
                 Ok foods ->
-                    [ VH.slider
-                        { items = List.map Meal.toString Meal.meals
-                        , onBack = Decrement
-                        , onNext = Increment
-                        , index = model.count
-                        }
+                    [ header [ class "sticky top-0 z-10 w-full" ]
+                        [ VH.slider
+                            { items = List.map Meal.toString Meal.meals
+                            , onBack = Decrement
+                            , onNext = Increment
+                            , index = model.count
+                            }
+                        ]
                     , div
-                        [ class "flex-1 overflow-y-auto smooth-scroll"
+                        [ class "flex-1 pb-24 smooth-scroll"
                         , id contentBodyId
                         ]
                         [ viewTotalNutrientsHeader model mealPctg
@@ -273,12 +275,14 @@ view model =
                                 (viewFoodItem model.openOverlay)
                                 model.selectedFoods
                         ]
-                    , button
-                        [ class "bottom-0 w-16 h-16 mx-auto mb-2 bg-white rounded-full"
-                        , class "text-indigo-600 shadow-lg hover:text-indigo-800"
-                        , onClick AddButtonClicked
+                    , footer [ class "sticky bottom-0 mx-auto" ]
+                        [ button
+                            [ class "bottom-0 w-16 h-16 mx-auto mb-2 bg-white rounded-full"
+                            , class "text-indigo-600 shadow-lg hover:text-indigo-800"
+                            , onClick AddButtonClicked
+                            ]
+                            [ Icons.addSolid [] ]
                         ]
-                        [ Icons.addSolid [] ]
                     , VH.dialog
                         { show = model.showFoods
                         , title = "Pick Food"
