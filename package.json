@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "autoprefixer": "^9.7.4",
+    "autoprefixer": "^9.7.6",
     "elm": "^0.19.1-3",
     "elm-format": "^0.8.3",
     "elm-hot": "^1.1.4",
@@ -22,7 +22,7 @@
     "tailwindcss": "^1.2.0"
   },
   "dependencies": {
-    "now": "^17.0.4"
+    "now": "^18.0.0"
   },
   "precacheManifest": {
     "inject-into": "sw.js"
