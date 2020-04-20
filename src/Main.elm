@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Browser.Dom as Dom
+import Browser.Navigation as Nav
 import Data.Food as Food
 import Data.Meal as Meal
 import Dict exposing (Dict)
@@ -12,6 +13,8 @@ import Json.Decode as JD
 import List.Extra as LE
 import String.Mark as Mark
 import Task
+import Url exposing (Url)
+import Url.Parser as UrlParser exposing ((</>))
 import Util exposing (toFixed, toPercentage)
 import View.Helpers as VH
 import Zondicons as Icons
@@ -19,11 +22,13 @@ import Zondicons as Icons
 
 main : Program JD.Value Model Msg
 main =
-    Browser.document
+    Browser.application
         { init = init
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChange
         }
 
 
@@ -43,6 +48,12 @@ type alias Foods =
     Result String (Dict String (List Food.Food))
 
 
+type Page
+    = Meals
+    | Foods
+    | Recipes
+
+
 type alias Model =
     { count : Int
     , showFoods : Bool
@@ -50,22 +61,25 @@ type alias Model =
     , searchTerm : String
     , selectedFoods : List ( Int, Food.Food )
     , openOverlay : Maybe String
+    , page : Page
+    , navKey : Nav.Key
     }
 
 
-init : JD.Value -> ( Model, Cmd Msg )
-init json =
-    ( { count = 0
-      , showFoods = False
-      , foods =
+init : JD.Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init json url navKey =
+    updateUrl url
+        { count = 0
+        , showFoods = False
+        , foods =
             JD.decodeValue Food.decoder json
                 |> Result.mapError (always "Could not decode food list")
-      , searchTerm = ""
-      , selectedFoods = []
-      , openOverlay = Nothing
-      }
-    , Cmd.none
-    )
+        , searchTerm = ""
+        , selectedFoods = []
+        , openOverlay = Nothing
+        , page = Meals
+        , navKey = navKey
+        }
 
 
 
@@ -83,6 +97,8 @@ type Msg
     | OverlayClicked String
     | FoodWeightPicked Int String
     | FoodWeightEdited String String
+    | LinkClicked Browser.UrlRequest
+    | UrlChange Url.Url
     | NoOp
 
 
@@ -105,6 +121,17 @@ updateOpenOverlay name openOverlay =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.navKey (Url.toString url) )
+
+                Browser.External url ->
+                    ( model, Nav.load url )
+
+        UrlChange url ->
+            updateUrl url model
+
         Increment ->
             ( { model | count = model.count + 1 }, Cmd.none )
 
@@ -174,6 +201,32 @@ update msg model =
 
         NoOp ->
             ( model, Cmd.none )
+
+
+
+-- ROUTING
+
+
+updateUrl : Url -> Model -> ( Model, Cmd Msg )
+updateUrl url model =
+    let
+        --session =
+        --getSession model.page
+        parser =
+            UrlParser.oneOf
+                [ UrlParser.map ( { model | page = Meals }, Cmd.none ) (UrlParser.s "meals")
+                , UrlParser.map ( { model | page = Foods }, Cmd.none ) (UrlParser.s "foods")
+                , UrlParser.map ( { model | page = Recipes }, Cmd.none ) (UrlParser.s "recipes")
+                ]
+    in
+    case UrlParser.parse parser url of
+        Nothing ->
+            --( { model | page =  session }, Nav.replaceUrl "meals" )
+            -- redirect to meals page in case of failed url parsing
+            ( model, Nav.replaceUrl model.navKey "meals" )
+
+        Just pair ->
+            pair
 
 
 
