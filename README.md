@@ -20,7 +20,7 @@ for correctness.
 Requirements:
 - having NodeJS installed
 
-1. Clone this repository
+1. Clone this repository and navigate into the root folder
 2. Run `npm install` to install dependencies
 3. Run `npm start` to start the dev server
 4. Open your browser at http://localhost:1234
