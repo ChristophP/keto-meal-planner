@@ -31,6 +31,10 @@ svg {
 @tailwind components;
 
 /* my components */
+.dropdown:focus-within > * + *, .dropdown:hover > * + * {
+  @apply block;
+}
+
 /* my components end */
 
 @tailwind utilities;

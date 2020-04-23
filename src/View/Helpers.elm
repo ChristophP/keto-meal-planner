@@ -107,4 +107,5 @@ scrollToBottom toMsg id =
 type alias Skeleton msg =
     { subHeader : List (Html msg)
     , body : List (Html msg)
+    , menuTitle : String
     }

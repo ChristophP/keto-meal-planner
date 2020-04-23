@@ -4,7 +4,7 @@ import Browser
 import Browser.Navigation as Nav
 import Data.Food as Food
 import Data.Session as Session exposing (Session)
-import Html exposing (Html, a, div, header, li, nav, text, ul)
+import Html exposing (Html, a, div, header, li, main_, nav, text, ul)
 import Html.Attributes exposing (class, href)
 import Json.Decode as JD
 import Page.Meals as Meals
@@ -148,21 +148,32 @@ updateUrl url model =
 -- VIEW
 
 
+viewDropdown title =
+    div [ class "relative dropdown" ]
+        [ div [ class "px-2 uppercase cursor-pointer", Html.Attributes.tabindex 0 ]
+            [ text title ]
+        , ul
+            [ class "absolute items-center justify-between flex-1 bg-white"
+            , class "shadow-md"
+            ]
+            [ li [] [ a [ class "px-2 py-1", href "/foods" ] [ text "Foods" ] ]
+            , li [] [ a [ class "px-2 py-1", href "/meals" ] [ text "Meals" ] ]
+            , li [] [ a [ class "px-2 py-1", href "/recipes" ] [ text "Recipes" ] ]
+            ]
+        ]
+
+
 viewSkeleton : (a -> msg) -> VH.Skeleton a -> Html msg
 viewSkeleton toMsg skeleton =
     div [ class "relative w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
-        [ header [ class "sticky top-0 z-10 w-full" ]
-            [ nav [ class "relative flex bg-white shadow-md" ]
-                [ ul [ class "flex items-center justify-between flex-1" ]
-                    [ li [ class "h-16" ] [ a [ href "/foods" ] [ text "Foods" ] ]
-                    , li [ class "h-16" ] [ a [ href "/meals" ] [ text "Meals" ] ]
-                    , li [ class "h-16" ] [ a [ href "/recipes" ] [ text "Recipes" ] ]
-                    ]
-                , div [ class "w-12" ] [ Icons.dotsHorizontalTriple [] ]
+        [ header [ class "sticky top-0 w-full" ]
+            [ nav [ class "relative z-10 flex items-center bg-white shadow-md" ]
+                [ viewDropdown skeleton.menuTitle
+                , div [ class "w-12 ml-auto" ] [ Icons.dotsHorizontalTriple [] ]
                 ]
             , div [] <| List.map (Html.map toMsg) skeleton.subHeader
             ]
-        , div [] <| List.map (Html.map toMsg) skeleton.body
+        , main_ [] <| List.map (Html.map toMsg) skeleton.body
         ]
 
 
@@ -174,8 +185,8 @@ view model =
                 viewSkeleton MealsMsg (Meals.view pageModel)
 
             Foods _ ->
-                Debug.todo "Foods page missing"
+                viewSkeleton never { subHeader = [], body = [ text "Coming Soon" ], menuTitle = "Foods" }
 
             Recipes _ ->
-                Debug.todo "Recipe page missing"
+                viewSkeleton never { subHeader = [], body = [ text "Coming Soon" ], menuTitle = "Recipes" }
         ]
