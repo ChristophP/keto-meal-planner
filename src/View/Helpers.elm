@@ -1,8 +1,10 @@
-module View.Helpers exposing (attrIf, dialog, inputField, slider)
+module View.Helpers exposing (Skeleton, attrIf, dialog, inputField, scrollToBottom, slider)
 
+import Browser.Dom as Dom
 import Html exposing (Attribute, Html, button, div, input, li, p, text, ul)
 import Html.Attributes exposing (class, classList, disabled, style)
 import Html.Events exposing (onClick)
+import Task
 import Zondicons as Icons
 
 
@@ -93,3 +95,16 @@ slider { onBack, onNext, index, items } =
             ]
             [ Icons.cheveronRight [] ]
         ]
+
+
+scrollToBottom : (Result Dom.Error () -> msg) -> String -> Cmd msg
+scrollToBottom toMsg id =
+    Dom.getViewportOf id
+        |> Task.andThen (\info -> Dom.setViewportOf id 0 info.scene.height)
+        |> Task.attempt toMsg
+
+
+type alias Skeleton msg =
+    { subHeader : List (Html msg)
+    , body : List (Html msg)
+    }
