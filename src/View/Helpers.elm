@@ -32,7 +32,7 @@ dialog :
     -> Html msg
 dialog { show, title, content, onClose } =
     div
-        [ class "fixed inset-0 flex items-center justify-center w-screen h-screen p-4"
+        [ class "fixed inset-0 z-30 flex items-center justify-center w-screen h-screen p-4"
         , attrIf (not show) <| style "transform" "translateY(-100vh)"
         ]
         [ div
@@ -43,7 +43,7 @@ dialog { show, title, content, onClose } =
             ]
             []
         , div
-            [ class "z-10 flex flex-col w-full h-full max-w-screen-sm"
+            [ class "relative flex flex-col w-full h-full max-w-screen-sm"
             , class "bg-white rounded-lg shadow-md transition-transform duration-500"
             , attrIf (not show) <| style "transform" "translateY(-100vh)"
             ]
