@@ -1,23 +1,15 @@
 module Main exposing (main)
 
 import Browser
-import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Data.Food as Food
-import Data.Meal as Meal
 import Data.Session as Session exposing (Session)
-import Dict exposing (Dict)
-import Html exposing (Html, a, button, div, header, input, li, nav, ol, p, span, text, ul)
-import Html.Attributes exposing (class, classList, disabled, href, id, placeholder, style, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (Html, a, div, header, li, nav, text, ul)
+import Html.Attributes exposing (class, href)
 import Json.Decode as JD
-import List.Extra as LE
 import Page.Meals as Meals
-import String.Mark as Mark
-import Task
 import Url exposing (Url)
-import Url.Parser as UrlParser exposing ((</>))
-import Util exposing (toFixed, toPercentage)
+import Url.Parser as UrlParser
 import View.Helpers as VH
 import Zondicons as Icons
 
