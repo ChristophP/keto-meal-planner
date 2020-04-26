@@ -289,7 +289,7 @@ viewSkeleton toMsg skeleton model =
         [ header [ class "sticky top-0 w-full" ]
             [ div [ class "relative flex items-center h-12 text-white bg-indigo-700 shadow-md z-12" ]
                 [ viewDropdown skeleton.menuTitle
-                , div [ class "w-8 h-8 mr-2 ml-auautoto" ] [ Icons.dotsHorizontalTriple [] ]
+                , div [ class "w-8 h-8 ml-auto mr-2" ] [ Icons.dotsHorizontalTriple [] ]
                 ]
             , div [] <| List.map (Html.map toMsg) skeleton.subHeader
             ]
