@@ -235,7 +235,7 @@ viewNav { page } =
                     [ href link
                     , class "block w-full px-4 py-1 my-2 font-bold tracking-wide"
                     , if active then
-                        class "bg-indigo-200"
+                        class "bg-indigo-500"
 
                       else
                         class ""
@@ -244,7 +244,7 @@ viewNav { page } =
                 ]
     in
     div
-        [ class "absolute top-0 w-full h-full shadow-md"
+        [ class "fixed inset-0 w-full h-full mx-auto shadow-md app-width"
         , if session.navOpen then
             style "transform" "none"
 
@@ -252,7 +252,7 @@ viewNav { page } =
             style "transform" "translateX(-100vw)"
         ]
         [ div
-            [ class "h-full bg-black app-width"
+            [ class "h-full bg-black"
             , class "transition-opacity duration-200 "
             , if session.navOpen then
                 style "opacity" "0.25"
@@ -263,17 +263,17 @@ viewNav { page } =
             ]
             []
         , nav
-            [ class "absolute top-0 bottom-0 items-center justify-between flex-1 pt-8 bg-white"
+            [ class "absolute inset-y-0 items-center justify-between w-2/3 pt-10 bg-white"
             , class "text-white bg-indigo-700"
             , class "shadow-md transition transition-transform duration-200"
+            , if session.navOpen then
+                style "transform" "none"
+
+              else
+                style "transform" "translateX(-100vw)"
             ]
             [ ul
-                [ class "nav-width"
-                , if session.navOpen then
-                    style "transform" "none"
-
-                  else
-                    style "transform" "translateX(-100vw)"
+                [ class "w-full"
                 ]
                 [ viewItem (isMealsPage page) "Meals" "/meals"
                 , viewItem (isFoodsPage page) "Foods" "/foods"
@@ -285,11 +285,11 @@ viewNav { page } =
 
 viewSkeleton : (a -> Msg) -> VH.Skeleton a -> Model -> Html Msg
 viewSkeleton toMsg skeleton model =
-    div [ class "relative w-full h-full mx-auto overflow-hidden bg-gray-200 max-w-screen-sm" ] <|
+    div [ class "relative w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
         [ header [ class "sticky top-0 w-full" ]
-            [ div [ class "relative z-10 flex items-center text-white bg-indigo-700 shadow-md" ]
+            [ div [ class "relative flex items-center h-12 text-white bg-indigo-700 shadow-md z-12" ]
                 [ viewDropdown skeleton.menuTitle
-                , div [ class "w-12 ml-auto" ] [ Icons.dotsHorizontalTriple [] ]
+                , div [ class "w-8 h-8 ml-auto mr-2" ] [ Icons.dotsHorizontalTriple [] ]
                 ]
             , div [] <| List.map (Html.map toMsg) skeleton.subHeader
             ]
