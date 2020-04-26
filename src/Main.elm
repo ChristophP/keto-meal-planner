@@ -233,7 +233,7 @@ viewNav { page } =
                 ]
     in
     div
-        [ class "fixed inset-0 w-full h-full mx-auto shadow-md app-width"
+        [ class "fixed inset-0 z-50 w-full h-full mx-auto shadow-md app-width"
         , if session.navOpen then
             style "transform" "none"
 
