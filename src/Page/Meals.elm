@@ -296,7 +296,7 @@ viewFoodItem maybeOpenFood ( grams, food ) =
     in
     li [ class "relative flex flex-col pr-8 mt-2 overflow-x-hidden bg-white shadow" ]
         [ div
-            [ class "relative flex items-center justify-center"
+            [ class "flex items-center justify-center"
             , class "text-sm font-semibold leading-relaxed"
             ]
             [ span [ class "text-indigo-700 " ] [ text food.name ]

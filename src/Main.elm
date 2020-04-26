@@ -4,11 +4,12 @@ import Browser
 import Browser.Navigation as Nav
 import Data.Food as Food
 import Data.Session as Session exposing (Session)
-import Html exposing (Html, a, div, header, li, main_, nav, text, ul)
+import Html exposing (Html, a, div, header, li, main_, nav, span, text, ul)
 import Html.Attributes exposing (class, href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Page.Meals as Meals
+import Svg.Attributes as SA
 import Url exposing (Url)
 import Url.Parser as UrlParser
 import View.Helpers as VH
@@ -211,18 +212,6 @@ updateUrl url model =
 -- VIEW
 
 
-viewDropdown : String -> Html Msg
-viewDropdown title =
-    div [ class "relative tracking-widest text-bg-black" ]
-        [ div
-            [ class "px-4 uppercase cursor-pointer"
-            , Html.Attributes.tabindex 0
-            , onClick NavToogle
-            ]
-            [ text title ]
-        ]
-
-
 viewNav : Model -> Html Msg
 viewNav { page } =
     let
@@ -283,12 +272,24 @@ viewNav { page } =
         ]
 
 
+viewPageTitle : String -> Html Msg
+viewPageTitle title =
+    div [ class "relative tracking-widest text-bg-black" ]
+        [ div
+            [ class "flex items-center px-4 uppercase cursor-pointer"
+            , Html.Attributes.tabindex 0
+            , onClick NavToogle
+            ]
+            [ Icons.menu [ SA.class "w-6" ], span [ class "ml-2" ] [ text title ] ]
+        ]
+
+
 viewSkeleton : (a -> Msg) -> VH.Skeleton a -> Model -> Html Msg
 viewSkeleton toMsg skeleton model =
     div [ class "relative w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
-        [ header [ class "sticky top-0 w-full" ]
-            [ div [ class "relative flex items-center h-12 text-white bg-indigo-700 shadow-md z-12" ]
-                [ viewDropdown skeleton.menuTitle
+        [ header [ class "sticky top-0 z-10 w-full" ]
+            [ div [ class "relative flex items-center h-12 text-white bg-indigo-700 shadow-md" ]
+                [ viewPageTitle skeleton.menuTitle
                 , div [ class "w-8 h-8 ml-auto mr-2" ] [ Icons.dotsHorizontalTriple [] ]
                 ]
             , div [] <| List.map (Html.map toMsg) skeleton.subHeader
