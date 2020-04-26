@@ -5,7 +5,8 @@ import Browser.Navigation as Nav
 import Data.Food as Food
 import Data.Session as Session exposing (Session)
 import Html exposing (Html, a, div, header, li, main_, nav, text, ul)
-import Html.Attributes exposing (class, href)
+import Html.Attributes exposing (class, href, style)
+import Html.Events exposing (onClick)
 import Json.Decode as JD
 import Page.Meals as Meals
 import Url exposing (Url)
@@ -36,6 +37,36 @@ type Page
     | Recipes Session
 
 
+isMealsPage : Page -> Bool
+isMealsPage page =
+    case page of
+        Meals _ ->
+            True
+
+        _ ->
+            False
+
+
+isFoodsPage : Page -> Bool
+isFoodsPage page =
+    case page of
+        Foods _ ->
+            True
+
+        _ ->
+            False
+
+
+isRecipesPage : Page -> Bool
+isRecipesPage page =
+    case page of
+        Recipes _ ->
+            True
+
+        _ ->
+            False
+
+
 getSession : Page -> Session
 getSession page =
     case page of
@@ -47,6 +78,19 @@ getSession page =
 
         Recipes session ->
             session
+
+
+updateSession : (Session -> Session) -> Page -> Page
+updateSession func page =
+    case page of
+        Meals pageModel ->
+            Meals { pageModel | session = func pageModel.session }
+
+        Foods session ->
+            Foods (func session)
+
+        Recipes session ->
+            Recipes (func session)
 
 
 type alias Model =
@@ -85,9 +129,19 @@ updatePage toPage toMsg model ( pageModel, pageCmd ) =
     ( { model | page = toPage pageModel }, Cmd.map toMsg pageCmd )
 
 
+closeNav : Model -> Model
+closeNav model =
+    let
+        newPage =
+            updateSession (\session -> { session | navOpen = False }) model.page
+    in
+    { model | page = newPage }
+
+
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChange Url.Url
+    | NavToogle
     | MealsMsg Meals.Msg
     | NoOp
 
@@ -105,6 +159,15 @@ update msg model =
 
         UrlChange url ->
             updateUrl url model
+                |> Tuple.mapFirst closeNav
+
+        NavToogle ->
+            let
+                newPage =
+                    updateSession (\session -> { session | navOpen = not session.navOpen })
+                        model.page
+            in
+            ( { model | page = newPage }, Cmd.none )
 
         MealsMsg pageMsg ->
             case model.page of
@@ -148,32 +211,90 @@ updateUrl url model =
 -- VIEW
 
 
+viewDropdown : String -> Html Msg
 viewDropdown title =
-    div [ class "relative dropdown" ]
-        [ div [ class "px-2 uppercase cursor-pointer", Html.Attributes.tabindex 0 ]
-            [ text title ]
-        , ul
-            [ class "absolute items-center justify-between flex-1 bg-white"
-            , class "shadow-md"
+    div [ class "relative tracking-widest text-bg-black" ]
+        [ div
+            [ class "px-4 uppercase cursor-pointer"
+            , Html.Attributes.tabindex 0
+            , onClick NavToogle
             ]
-            [ li [] [ a [ class "px-2 py-1", href "/foods" ] [ text "Foods" ] ]
-            , li [] [ a [ class "px-2 py-1", href "/meals" ] [ text "Meals" ] ]
-            , li [] [ a [ class "px-2 py-1", href "/recipes" ] [ text "Recipes" ] ]
+            [ text title ]
+        ]
+
+
+viewNav : Model -> Html Msg
+viewNav { page } =
+    let
+        session =
+            getSession page
+
+        viewItem active name link =
+            li []
+                [ a
+                    [ href link
+                    , class "block w-full px-4 py-1 my-2 font-bold tracking-wide"
+                    , if active then
+                        class "bg-indigo-200"
+
+                      else
+                        class ""
+                    ]
+                    [ text name ]
+                ]
+    in
+    div
+        [ class "absolute top-0 w-full h-full shadow-md"
+        , if session.navOpen then
+            style "transform" "none"
+
+          else
+            style "transform" "translateX(-100vw)"
+        ]
+        [ div
+            [ class "h-full bg-black app-width"
+            , class "transition-opacity duration-200 "
+            , if session.navOpen then
+                style "opacity" "0.25"
+
+              else
+                style "opacity" "0"
+            , onClick NavToogle
+            ]
+            []
+        , nav
+            [ class "absolute top-0 bottom-0 items-center justify-between flex-1 pt-8 bg-white"
+            , class "text-white bg-indigo-700"
+            , class "shadow-md transition transition-transform duration-200"
+            ]
+            [ ul
+                [ class "nav-width"
+                , if session.navOpen then
+                    style "transform" "none"
+
+                  else
+                    style "transform" "translateX(-100vw)"
+                ]
+                [ viewItem (isMealsPage page) "Meals" "/meals"
+                , viewItem (isFoodsPage page) "Foods" "/foods"
+                , viewItem (isRecipesPage page) "Recipes" "/recipes"
+                ]
             ]
         ]
 
 
-viewSkeleton : (a -> msg) -> VH.Skeleton a -> Html msg
-viewSkeleton toMsg skeleton =
-    div [ class "relative w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
+viewSkeleton : (a -> Msg) -> VH.Skeleton a -> Model -> Html Msg
+viewSkeleton toMsg skeleton model =
+    div [ class "relative w-full h-full mx-auto overflow-hidden bg-gray-200 max-w-screen-sm" ] <|
         [ header [ class "sticky top-0 w-full" ]
-            [ nav [ class "relative z-10 flex items-center bg-white shadow-md" ]
+            [ div [ class "relative z-10 flex items-center text-white bg-indigo-700 shadow-md" ]
                 [ viewDropdown skeleton.menuTitle
                 , div [ class "w-12 ml-auto" ] [ Icons.dotsHorizontalTriple [] ]
                 ]
             , div [] <| List.map (Html.map toMsg) skeleton.subHeader
             ]
         , main_ [] <| List.map (Html.map toMsg) skeleton.body
+        , viewNav model
         ]
 
 
@@ -182,11 +303,11 @@ view model =
     Browser.Document "Keto Meal Planner"
         [ case model.page of
             Meals pageModel ->
-                viewSkeleton MealsMsg (Meals.view pageModel)
+                viewSkeleton MealsMsg (Meals.view pageModel) model
 
             Foods _ ->
-                viewSkeleton never { subHeader = [], body = [ text "Coming Soon" ], menuTitle = "Foods" }
+                viewSkeleton identity { subHeader = [], body = [ text "Coming Soon" ], menuTitle = "Foods" } model
 
             Recipes _ ->
-                viewSkeleton never { subHeader = [], body = [ text "Coming Soon" ], menuTitle = "Recipes" }
+                viewSkeleton identity { subHeader = [], body = [ text "Coming Soon" ], menuTitle = "Recipes" } model
         ]

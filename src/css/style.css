@@ -8,6 +8,8 @@ html, body {
 body {
   font-size: 18px;
   @apply flex flex-col font-sans text-gray-800 bg-gray-400;
+
+  --app-width: 640px;
 }
 
 hr {
@@ -31,8 +33,13 @@ svg {
 @tailwind components;
 
 /* my components */
-.dropdown:focus-within > * + *, .dropdown:hover > * + * {
-  @apply block;
+
+.app-width {
+  max-width: var(--app-width);
+}
+
+.nav-width {
+  width: calc(2/3 * var(--app-width));
 }
 
 /* my components end */

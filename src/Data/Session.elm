@@ -12,9 +12,15 @@ type alias Foods =
 type alias Session =
     { navKey : Nav.Key
     , foods : Foods
+    , navOpen : Bool
+    , settingsOpen : Bool
     }
 
 
 init : Nav.Key -> Foods -> Session
 init key foods =
-    { navKey = key, foods = foods }
+    { navKey = key
+    , foods = foods
+    , navOpen = False
+    , settingsOpen = False
+    }
