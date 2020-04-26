@@ -514,6 +514,6 @@ view model =
                 ]
 
             Err err ->
-                Debug.todo "Foods lists could not be parsed"
+                [ text "Foods lists could not be parsed" ]
     , menuTitle = "Meals"
     }
