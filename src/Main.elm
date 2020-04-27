@@ -130,15 +130,6 @@ updatePage toPage toMsg model ( pageModel, pageCmd ) =
     ( { model | page = toPage pageModel }, Cmd.map toMsg pageCmd )
 
 
-closeNav : Model -> Model
-closeNav model =
-    let
-        newPage =
-            updateSession (\session -> { session | navOpen = False }) model.page
-    in
-    { model | page = newPage }
-
-
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChange Url.Url
@@ -161,7 +152,6 @@ update msg model =
 
         UrlChange url ->
             updateUrl url model
-                |> Tuple.mapFirst closeNav
 
         NavToogle ->
             let
@@ -237,6 +227,7 @@ viewNav { page } =
 
                       else
                         class ""
+                    , onClick NavToogle
                     ]
                     [ text name ]
                 ]
