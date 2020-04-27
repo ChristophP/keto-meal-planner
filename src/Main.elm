@@ -234,11 +234,8 @@ viewNav { page } =
     in
     div
         [ class "fixed inset-0 z-50 w-full h-full mx-auto shadow-md app-width"
-        , if session.navOpen then
-            style "transform" "none"
-
-          else
-            style "transform" "translateX(-100vw)"
+        , VH.attrIf (not session.navOpen) <|
+            class "transition-transform transform -translate-x-full delay-200"
         ]
         [ div
             [ class "h-full bg-black"
