@@ -8,6 +8,8 @@ html, body {
 body {
   font-size: 18px;
   @apply flex flex-col font-sans text-gray-800 bg-gray-400;
+
+  --app-width: 640px;
 }
 
 hr {
@@ -31,6 +33,17 @@ svg {
 @tailwind components;
 
 /* my components */
+
+.app-width {
+  max-width: var(--app-width);
+}
+
+.main-text-color {
+  @apply text-gray-800;
+}
+
+
+
 /* my components end */
 
 @tailwind utilities;
@@ -45,23 +58,15 @@ svg {
   min-height: calc(100vh - 4.717rem - 1.6rem);
 }
 
-.header-gradient {
-  background-image: linear-gradient(180deg, theme('colors.green.900'), theme('colors.green.700'));
-}
-
 .flex-full {
   flex: 0 0 100%;
 }
 
-.collapsed {
-  border-collapse: collapse;
-}
-
-.v-gap > * + * {
+.v-gap-4 > * + * {
   @apply mt-4;
 }
 
-.v-gap-sm > * + * {
+.v-gap-2 > * + * {
   @apply mt-2;
 }
 

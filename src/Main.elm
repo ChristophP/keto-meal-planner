@@ -1,29 +1,30 @@
 module Main exposing (main)
 
 import Browser
-import Browser.Dom as Dom
+import Browser.Navigation as Nav
 import Data.Food as Food
-import Data.Meal as Meal
-import Dict exposing (Dict)
-import Html exposing (Html, button, div, input, li, ol, p, span, text, ul)
-import Html.Attributes exposing (class, classList, disabled, id, placeholder, style, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Data.Session as Session exposing (Session)
+import Html exposing (Html, a, div, header, li, main_, nav, span, text, ul)
+import Html.Attributes exposing (class, href, style)
+import Html.Events exposing (onClick)
 import Json.Decode as JD
-import List.Extra as LE
-import String.Mark as Mark
-import Task
-import Util exposing (toFixed, toPercentage)
+import Page.Meals as Meals
+import Svg.Attributes as SA
+import Url exposing (Url)
+import Url.Parser as UrlParser
 import View.Helpers as VH
 import Zondicons as Icons
 
 
 main : Program JD.Value Model Msg
 main =
-    Browser.document
+    Browser.application
         { init = init
         , view = view
         , update = update
         , subscriptions = \_ -> Sub.none
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChange
         }
 
 
@@ -31,145 +32,149 @@ main =
 -- MODEL
 
 
-totalAllowedCalories =
-    800
+type Page
+    = Meals Meals.Model
+    | Foods Session
+    | Recipes Session
 
 
-targetNutritionRatio =
-    { protein = 0.08, fat = 0.84, carbs = 0.08 }
+isMealsPage : Page -> Bool
+isMealsPage page =
+    case page of
+        Meals _ ->
+            True
+
+        _ ->
+            False
 
 
-type alias Foods =
-    Result String (Dict String (List Food.Food))
+isFoodsPage : Page -> Bool
+isFoodsPage page =
+    case page of
+        Foods _ ->
+            True
+
+        _ ->
+            False
+
+
+isRecipesPage : Page -> Bool
+isRecipesPage page =
+    case page of
+        Recipes _ ->
+            True
+
+        _ ->
+            False
+
+
+getSession : Page -> Session
+getSession page =
+    case page of
+        Meals model ->
+            model.session
+
+        Foods session ->
+            session
+
+        Recipes session ->
+            session
+
+
+updateSession : (Session -> Session) -> Page -> Page
+updateSession func page =
+    case page of
+        Meals pageModel ->
+            Meals { pageModel | session = func pageModel.session }
+
+        Foods session ->
+            Foods (func session)
+
+        Recipes session ->
+            Recipes (func session)
 
 
 type alias Model =
-    { count : Int
-    , showFoods : Bool
-    , foods : Foods
-    , searchTerm : String
-    , selectedFoods : List ( Int, Food.Food )
-    , openOverlay : Maybe String
+    { page : Page
+    , navKey : Nav.Key
     }
 
 
-init : JD.Value -> ( Model, Cmd Msg )
-init json =
-    ( { count = 0
-      , showFoods = False
-      , foods =
+init : JD.Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init json url navKey =
+    let
+        foods =
             JD.decodeValue Food.decoder json
                 |> Result.mapError (always "Could not decode food list")
-      , searchTerm = ""
-      , selectedFoods = []
-      , openOverlay = Nothing
-      }
-    , Cmd.none
-    )
+
+        session =
+            Session.init navKey foods
+    in
+    updateUrl url
+        { page = Meals (Meals.init session)
+        , navKey = navKey
+        }
 
 
 
 -- UPDATE
 
 
+updatePage :
+    (pageModel -> Page)
+    -> (pageMsg -> Msg)
+    -> Model
+    -> ( pageModel, Cmd pageMsg )
+    -> ( Model, Cmd Msg )
+updatePage toPage toMsg model ( pageModel, pageCmd ) =
+    ( { model | page = toPage pageModel }, Cmd.map toMsg pageCmd )
+
+
 type Msg
-    = Increment
-    | Decrement
-    | AddButtonClicked
-    | DialogCancelled
-    | SearchChanged String
-    | FoodSelected Food.Food
-    | DeleteFoodClicked String
-    | OverlayClicked String
-    | FoodWeightPicked Int String
-    | FoodWeightEdited String String
+    = LinkClicked Browser.UrlRequest
+    | UrlChange Url.Url
+    | NavToogle
+    | SettingsToggle
+    | MealsMsg Meals.Msg
     | NoOp
-
-
-updateOpenOverlay : String -> Maybe String -> Maybe String
-updateOpenOverlay name openOverlay =
-    case openOverlay of
-        -- already open
-        Just openOverlayName ->
-            if name == openOverlayName then
-                Nothing
-
-            else
-                Just name
-
-        -- none open yet
-        Nothing ->
-            Just name
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Increment ->
-            ( { model | count = model.count + 1 }, Cmd.none )
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.navKey (Url.toString url) )
 
-        Decrement ->
-            ( { model | count = model.count - 1 }, Cmd.none )
+                Browser.External url ->
+                    ( model, Nav.load url )
 
-        AddButtonClicked ->
-            ( { model | showFoods = True }
-            , Task.attempt (always NoOp) (Dom.focus foodSearchId)
-            )
+        UrlChange url ->
+            updateUrl url model
 
-        DialogCancelled ->
-            ( { model | showFoods = False }, Cmd.none )
-
-        SearchChanged searchTerm ->
-            ( { model | searchTerm = searchTerm }, Cmd.none )
-
-        FoodSelected food ->
-            ( { model
-                | selectedFoods = model.selectedFoods ++ [ ( 10, food ) ]
-                , showFoods = False
-                , searchTerm = ""
-                , openOverlay = updateOpenOverlay food.name model.openOverlay
-              }
-            , scrollToBottom contentBodyId
-            )
-
-        DeleteFoodClicked name ->
+        NavToogle ->
             let
-                newFoods =
-                    List.filter (Tuple.second >> .name >> (/=) name) model.selectedFoods
+                newPage =
+                    updateSession (\session -> { session | navOpen = not session.navOpen })
+                        model.page
             in
-            ( { model
-                | selectedFoods = newFoods
-                , openOverlay = Nothing
-              }
-            , Cmd.none
-            )
+            ( { model | page = newPage }, Cmd.none )
 
-        OverlayClicked foodName ->
-            ( { model | openOverlay = updateOpenOverlay foodName model.openOverlay }
-            , Cmd.none
-            )
-
-        FoodWeightPicked weight name ->
+        SettingsToggle ->
             let
-                newSelectedFoods =
-                    LE.updateIf (Tuple.second >> .name >> (==) name)
-                        (Tuple.mapFirst (\_ -> weight))
-                        model.selectedFoods
+                newPage =
+                    updateSession (\session -> { session | settingsOpen = not session.settingsOpen })
+                        model.page
             in
-            ( { model | selectedFoods = newSelectedFoods }, Cmd.none )
+            ( { model | page = newPage }, Cmd.none )
 
-        FoodWeightEdited inputValue name ->
-            case String.toInt inputValue of
-                Just weight ->
-                    let
-                        newSelectedFoods =
-                            LE.updateIf (Tuple.second >> .name >> (==) name)
-                                (Tuple.mapFirst (\_ -> weight))
-                                model.selectedFoods
-                    in
-                    ( { model | selectedFoods = newSelectedFoods }, Cmd.none )
+        MealsMsg pageMsg ->
+            case model.page of
+                Meals pageModel ->
+                    updatePage Meals MealsMsg model (Meals.update pageMsg pageModel)
 
-                Nothing ->
+                _ ->
                     ( model, Cmd.none )
 
         NoOp ->
@@ -177,366 +182,173 @@ update msg model =
 
 
 
+-- ROUTING
+
+
+updateUrl : Url -> Model -> ( Model, Cmd Msg )
+updateUrl url model =
+    let
+        session =
+            getSession model.page
+
+        parser =
+            UrlParser.oneOf
+                [ UrlParser.map ( { model | page = Meals (Meals.init session) }, Cmd.none ) (UrlParser.s "meals")
+                , UrlParser.map ( { model | page = Foods session }, Cmd.none ) (UrlParser.s "foods")
+                , UrlParser.map ( { model | page = Recipes session }, Cmd.none ) (UrlParser.s "recipes")
+                ]
+    in
+    case UrlParser.parse parser url of
+        Nothing ->
+            -- redirect to meals page in case of failed url parsing
+            ( model, Nav.replaceUrl model.navKey "meals" )
+
+        Just pair ->
+            pair
+
+
+
 -- VIEW
 
 
-scrollToBottom : String -> Cmd Msg
-scrollToBottom id =
-    Dom.getViewportOf id
-        |> Task.andThen (\info -> Dom.setViewportOf id 0 info.scene.height)
-        |> Task.attempt (\_ -> NoOp)
-
-
-foodSearchId : String
-foodSearchId =
-    "food-search"
-
-
-contentBodyId : String
-contentBodyId =
-    "content-body"
-
-
-viewNutrientPctg : Float -> Food.Food -> String
-viewNutrientPctg num food =
-    toFixed 1 (num / Food.totalNutrientWeightPer100grams food * 100) ++ "%"
-
-
-viewMealGrams : Food.Nutrient -> List ( Int, Food.Food ) -> Html Msg
-viewMealGrams nutrient foods =
+viewNav : Model -> Html Msg
+viewNav { page } =
     let
-        totalGrams =
-            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) foods
-                |> List.sum
+        session =
+            getSession page
+
+        viewItem active name link =
+            li []
+                [ a
+                    [ href link
+                    , class "block w-full px-4 py-1 my-2 font-bold tracking-wide"
+                    , if active then
+                        class "bg-indigo-500"
+
+                      else
+                        class ""
+                    , onClick NavToogle
+                    ]
+                    [ text name ]
+                ]
     in
-    span
-        [ class "font-medium text-indigo-700" ]
-        [ text <| toFixed 1 totalGrams ++ "g" ]
+    div
+        [ class "fixed inset-0 z-50 w-full h-full mx-auto shadow-md app-width"
+        , if session.navOpen then
+            style "transform" "none"
 
-
-viewMealPercentage : Food.Nutrient -> Float -> List ( Int, Food.Food ) -> Html Msg
-viewMealPercentage nutrient threshold foods =
-    let
-        caloriesFromNutrient =
-            List.map (\( grams, food ) -> Food.getNutrientCalories nutrient (toFloat grams) food) foods
-                |> List.sum
-
-        mealCalories =
-            List.map
-                (\( grams, food ) -> Food.getCalories (toFloat grams) food)
-                foods
-                |> List.sum
-
-        ratio =
-            caloriesFromNutrient / mealCalories
-
-        ratioGood =
-            abs (ratio - threshold) < 0.05
-    in
-    span
-        [ class "font-medium"
-        , VH.attrIf ratioGood <| class "text-indigo-700"
-        , VH.attrIf (not ratioGood) <| class "text-red-500"
+          else
+            style "transform" "translateX(-100vw)"
         ]
-        [ text <| toPercentage ratio ]
+        [ div
+            [ class "h-full bg-black"
+            , class "transition-opacity duration-200 "
+            , if session.navOpen then
+                style "opacity" "0.25"
+
+              else
+                style "opacity" "0"
+            , onClick NavToogle
+            ]
+            []
+        , nav
+            [ class "absolute inset-y-0 items-center justify-between w-2/3 pt-10 bg-white"
+            , class "text-white bg-indigo-700"
+            , class "shadow-md transition transition-transform duration-200"
+            , if session.navOpen then
+                style "transform" "none"
+
+              else
+                style "transform" "translateX(-100vw)"
+            ]
+            [ ul
+                [ class "w-full"
+                ]
+                [ viewItem (isMealsPage page) "Meals" "/meals"
+                , viewItem (isFoodsPage page) "Foods" "/foods"
+                , viewItem (isRecipesPage page) "Recipes" "/recipes"
+                ]
+            ]
+        ]
+
+
+viewPageTitle : String -> Html Msg
+viewPageTitle title =
+    div [ class "relative tracking-widest text-bg-black" ]
+        [ div
+            [ class "flex items-center px-4 uppercase cursor-pointer"
+            , Html.Attributes.tabindex 0
+            , onClick NavToogle
+            ]
+            [ Icons.menu [ SA.class "w-6" ], span [ class "ml-2" ] [ text title ] ]
+        ]
+
+
+viewSkeleton : (a -> Msg) -> VH.Skeleton a -> Model -> Html Msg
+viewSkeleton toMsg skeleton model =
+    let
+        session =
+            getSession model.page
+    in
+    div [ class "relative w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
+        [ header [ class "sticky top-0 z-10 w-full" ]
+            [ div [ class "relative z-10 flex items-center h-12 text-white bg-indigo-700 shadow-md" ]
+                [ viewPageTitle skeleton.menuTitle
+                , viewSettings session
+                ]
+            , div [ class "relative" ] <| List.map (Html.map toMsg) skeleton.subHeader
+            ]
+        , main_ [] <| List.map (Html.map toMsg) skeleton.body
+        , viewNav model
+        ]
+
+
+viewSettings : Session -> Html Msg
+viewSettings session =
+    let
+        linkItem text_ link =
+            li []
+                [ VH.externalLink
+                    { href = link
+                    , title = Nothing
+                    , children = [ text text_ ]
+                    , attr =
+                        [ class "block px-4 py-2 hover:bg-gray-200"
+                        , onClick SettingsToggle
+                        ]
+                    }
+                ]
+    in
+    div [ class "relative px-1 ml-auto mr-2 cursor-pointer" ]
+        [ Icons.dotsHorizontalTriple [ SA.class "w-8", onClick SettingsToggle ]
+        , div
+            [ class "fixed inset-0"
+            , VH.attrIf (not session.settingsOpen) (class "hidden")
+            , onClick SettingsToggle
+            ]
+            []
+        , ul
+            [ class "absolute top-0 right-0 w-48 bg-white shadow-md main-text-color"
+            , class "v-gap-2"
+            , VH.attrIf (not session.settingsOpen) (class "hidden")
+            ]
+            [ linkItem "Report a bug" "https://github.com/ChristophP/keto-meal-planner/issues/new"
+            , linkItem "Request a feature" "https://github.com/ChristophP/keto-meal-planner/issues/new"
+            , linkItem "Changelog" "https://github.com/ChristophP/keto-meal-planner/blob/master/CHANGELOG.md"
+            ]
+        ]
 
 
 view : Model -> Browser.Document Msg
 view model =
-    let
-        mealPctg =
-            case LE.getAt model.count Meal.meals of
-                Just meal ->
-                    Meal.toPercentage meal
-
-                Nothing ->
-                    -- should never happen
-                    0
-    in
     Browser.Document "Keto Meal Planner"
-        [ div [ class "flex flex-col w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
-            case model.foods of
-                Ok foods ->
-                    [ VH.slider
-                        { items = List.map Meal.toString Meal.meals
-                        , onBack = Decrement
-                        , onNext = Increment
-                        , index = model.count
-                        }
-                    , div
-                        [ class "flex-1 overflow-y-auto smooth-scroll"
-                        , id contentBodyId
-                        ]
-                        [ viewTotalNutrientsHeader model mealPctg
-                        , ol [ class "mt-4 text-2xl text-center" ] <|
-                            List.map
-                                (viewFoodItem model.openOverlay)
-                                model.selectedFoods
-                        ]
-                    , button
-                        [ class "bottom-0 w-16 h-16 mx-auto mb-2 bg-white rounded-full"
-                        , class "text-indigo-600 shadow-lg hover:text-indigo-800"
-                        , onClick AddButtonClicked
-                        ]
-                        [ Icons.addSolid [] ]
-                    , VH.dialog
-                        { show = model.showFoods
-                        , title = "Pick Food"
-                        , content =
-                            [ div [ class "flex flex-col h-full" ]
-                                [ VH.inputField
-                                    [ id foodSearchId
-                                    , placeholder "Search for Food"
-                                    , onInput SearchChanged
-                                    , value model.searchTerm
-                                    ]
-                                    []
-                                , viewFoodsList model.searchTerm foods
-                                ]
-                            ]
-                        , onClose = DialogCancelled
-                        }
-                    ]
+        [ case model.page of
+            Meals pageModel ->
+                viewSkeleton MealsMsg (Meals.view pageModel) model
 
-                Err err ->
-                    [ div [ class "w-full h-full text-xl" ] [ text err ] ]
-        ]
+            Foods _ ->
+                viewSkeleton identity { subHeader = [], body = [ div [ class "flex items-center justify-center h-64" ] [ text "Coming Soon" ] ], menuTitle = "Foods" } model
 
-
-caseInsensitiveSearch : String -> String -> Bool
-caseInsensitiveSearch search word =
-    String.contains (String.toLower search) (String.toLower word)
-
-
-searchFoods : String -> Dict String (List Food.Food) -> Dict String (List Food.Food)
-searchFoods searchTerm foods =
-    case searchTerm of
-        "" ->
-            foods
-
-        _ ->
-            Dict.foldl
-                (\key value acc ->
-                    if caseInsensitiveSearch searchTerm key then
-                        Dict.insert key value acc
-
-                    else
-                        let
-                            filteredCategory =
-                                List.filter
-                                    (\food -> caseInsensitiveSearch searchTerm food.name)
-                                    value
-                        in
-                        case filteredCategory of
-                            [] ->
-                                acc
-
-                            _ ->
-                                Dict.insert key filteredCategory acc
-                )
-                Dict.empty
-                foods
-
-
-viewFoodsList : String -> Dict String (List Food.Food) -> Html Msg
-viewFoodsList searchTerm foods =
-    let
-        pairs =
-            Dict.toList <| searchFoods searchTerm foods
-    in
-    div [ class "flex-1 overflow-y-auto v-gap" ] <|
-        List.map
-            (\( category, items ) ->
-                div [ class "px-4" ]
-                    [ p
-                        [ class "pt-1 pb-2 border-t-2 border-indigo-700"
-                        , class "antialiased font-semibold text-indigo-700"
-                        ]
-                      <|
-                        Mark.mark searchTerm category
-                    , ul [ class "mt-2" ] <|
-                        List.map
-                            (\item ->
-                                li
-                                    [ class "py-2 pl-2 text-lg cursor-pointer font-italics"
-                                    , class "hover:bg-gray-100 active:bg-gray-100"
-                                    , onClick <| FoodSelected item
-                                    ]
-                                    (Mark.mark searchTerm item.name)
-                            )
-                            items
-                    ]
-            )
-            pairs
-
-
-viewFoodItem : Maybe String -> ( Int, Food.Food ) -> Html Msg
-viewFoodItem maybeOpenFood ( grams, food ) =
-    let
-        isOpen =
-            case maybeOpenFood of
-                Just foodName ->
-                    foodName == food.name
-
-                Nothing ->
-                    False
-    in
-    li [ class "relative flex flex-col pr-8 mt-2 overflow-x-hidden bg-white shadow" ]
-        [ div
-            [ class "relative flex items-center justify-center"
-            , class "text-sm font-semibold leading-relaxed"
-            ]
-            [ span [ class "text-indigo-700 " ] [ text food.name ]
-            ]
-        , div [ class "flex pb-1" ]
-            [ div [ class "flex flex-col flex-1 px-1 text-sm" ]
-                [ span [] [ text "Protein" ]
-                , span [] [ text <| toFixed 2 food.protein, text "g" ]
-                , span [] [ text (viewNutrientPctg food.protein food) ]
-                ]
-            , div [ class "flex flex-col flex-1 px-1 text-sm" ]
-                [ span [ class "text-sm" ] [ text "Fat" ]
-                , span [] [ text <| toFixed 2 food.fat, text "g" ]
-                , span [] [ text (viewNutrientPctg food.fat food) ]
-                ]
-            , div [ class "flex flex-col flex-1 px-1 text-sm" ]
-                [ span [] [ text "Carbs" ]
-                , span [] [ text <| toFixed 2 food.carbs, text "g" ]
-                , span [] [ text (viewNutrientPctg food.carbs food) ]
-                ]
-            ]
-        , viewFoodOverlay
-            { open = isOpen
-            , onOverlayClick = OverlayClicked food.name
-            , onDelete = DeleteFoodClicked food.name
-            , grams = grams
-            , name = food.name
-            }
-        ]
-
-
-viewFoodOverlay :
-    { open : Bool
-    , onOverlayClick : Msg
-    , onDelete : Msg
-    , grams : Int
-    , name : String
-    }
-    -> Html Msg
-viewFoodOverlay { open, onOverlayClick, onDelete, grams, name } =
-    div
-        [ class "absolute flex-1 w-full h-full"
-        , class "overflow-hidden text-white rounded-l"
-        , class "transition-transform duration-500"
-        , VH.attrIf (not open) <| style "transform" "translateX(90%)"
-        ]
-        [ div [ class "absolute inset-0 bg-indigo-700 opacity-75" ] []
-        , div [ class "absolute inset-0 flex items-center justify-between" ]
-            [ button [ class "w-6 h-full hover:bg-indigo-800", onClick onOverlayClick ]
-                [ div
-                    [ class "transform"
-                    , classList [ ( "rotate-180", open ) ]
-                    ]
-                    [ Icons.cheveronLeft [] ]
-                ]
-            , viewGramPicker grams name
-            , button
-                [ class "w-6 mr-2 text-gray-400"
-                , class "cursor-pointer hover:text-gray-600"
-                , onClick onDelete
-                ]
-                [ Icons.trash [] ]
-            ]
-        ]
-
-
-viewGramPicker : Int -> String -> Html Msg
-viewGramPicker grams name =
-    let
-        buttonClasses =
-            "w-12 bg-gray-500 hover:bg-gray-700 active:bg-gray-700"
-    in
-    div [ class "flex px-2 shadow-md" ]
-        [ button
-            [ type_ "button"
-            , class buttonClasses
-            , class "rounded-l-md"
-            , onClick <| FoodWeightPicked (grams - 5) name
-            , disabled (grams - 5 < 0)
-            ]
-            [ text "-" ]
-        , input
-            [ class "w-16 text-center text-gray-700 rounded-none"
-            , value (String.fromInt grams)
-            , type_ "text"
-            , onInput <| \inputValue -> FoodWeightEdited inputValue name
-            ]
-            []
-        , button
-            [ class buttonClasses
-            , class "rounded-r-md"
-            , onClick <| FoodWeightPicked (grams + 5) name
-            ]
-            [ text "+" ]
-        ]
-
-
-viewTotalNutrientsHeader : Model -> Float -> Html Msg
-viewTotalNutrientsHeader model mealPctg =
-    let
-        mealCalories =
-            totalAllowedCalories * mealPctg
-
-        proteinTarget =
-            mealCalories * targetNutritionRatio.protein / Food.caloriesPerGram.protein
-
-        fatTarget =
-            mealCalories * targetNutritionRatio.fat / Food.caloriesPerGram.fat
-
-        carbsTarget =
-            mealCalories * targetNutritionRatio.carbs / Food.caloriesPerGram.carbs
-    in
-    div [ class "mt-2 text-2xl text-center bg-white" ]
-        [ span [ class "text-sm tracking-widest uppercase" ] [ text "Target calories" ]
-        , div [ class "flex pr-8" ]
-            [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
-                [ span [] [ text "Protein" ]
-                , span []
-                    [ viewMealGrams Food.Protein model.selectedFoods
-                    , text " / "
-                    , text <| toFixed 2 proteinTarget ++ "g"
-                    ]
-                , span []
-                    [ viewMealPercentage Food.Protein targetNutritionRatio.protein model.selectedFoods
-                    , text " / "
-                    , text (toPercentage targetNutritionRatio.protein)
-                    ]
-                ]
-            , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
-                [ span [ class "text-sm" ] [ text "Fat" ]
-                , span []
-                    [ viewMealGrams Food.Fat model.selectedFoods
-                    , text " / "
-                    , text <| toFixed 2 fatTarget ++ "g"
-                    ]
-                , span []
-                    [ viewMealPercentage Food.Fat targetNutritionRatio.fat model.selectedFoods
-                    , text " / "
-                    , text (toPercentage targetNutritionRatio.fat)
-                    ]
-                ]
-            , div [ class "flex flex-col flex-1 p-2 text-sm" ]
-                [ span [] [ text "Carbs" ]
-                , span []
-                    [ viewMealGrams Food.Carbs model.selectedFoods
-                    , text " / "
-                    , text <| toFixed 2 carbsTarget ++ "g"
-                    ]
-                , span []
-                    [ viewMealPercentage Food.Carbs targetNutritionRatio.carbs model.selectedFoods
-                    , text " / "
-                    , text (toPercentage targetNutritionRatio.carbs)
-                    ]
-                ]
-            ]
+            Recipes _ ->
+                viewSkeleton identity { subHeader = [], body = [ div [ class "flex items-center justify-center h-64" ] [ text "Coming Soon" ] ], menuTitle = "Recipes" } model
         ]

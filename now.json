@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "alias": "keto-planner.deedop.de",
   "headers": [
     {
       "source": "^/(.+?\\.[a-f0-9]{8}\\..+)$",

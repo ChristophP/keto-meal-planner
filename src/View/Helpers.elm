@@ -1,8 +1,18 @@
-module View.Helpers exposing (attrIf, dialog, inputField, slider)
+module View.Helpers exposing
+    ( Skeleton
+    , attrIf
+    , dialog
+    , externalLink
+    , inputField
+    , scrollToBottom
+    , slider
+    )
 
-import Html exposing (Attribute, Html, button, div, input, li, p, text, ul)
-import Html.Attributes exposing (class, classList, disabled, style)
+import Browser.Dom as Dom
+import Html exposing (Attribute, Html, a, button, div, input, li, p, text, ul)
+import Html.Attributes exposing (class, classList, disabled, href, rel, style, target, title)
 import Html.Events exposing (onClick)
+import Task
 import Zondicons as Icons
 
 
@@ -21,6 +31,25 @@ inputField attr =
         (class "w-full p-2 shadow focus:shadow-outline" :: attr)
 
 
+externalLink :
+    { href : String
+    , title : Maybe String
+    , children : List (Html msg)
+    , attr : List (Attribute msg)
+    }
+    -> Html msg
+externalLink props =
+    a
+        ([ href props.href
+         , title (Maybe.withDefault "" props.title)
+         , target "_blank"
+         , rel "noopener noreferrer"
+         ]
+            ++ props.attr
+        )
+        props.children
+
+
 dialog :
     { show : Bool
     , title : String
@@ -30,7 +59,7 @@ dialog :
     -> Html msg
 dialog { show, title, content, onClose } =
     div
-        [ class "fixed inset-0 flex items-center justify-center w-screen h-screen p-4"
+        [ class "fixed inset-0 z-30 flex items-center justify-center w-screen h-screen p-4"
         , attrIf (not show) <| style "transform" "translateY(-100vh)"
         ]
         [ div
@@ -41,7 +70,7 @@ dialog { show, title, content, onClose } =
             ]
             []
         , div
-            [ class "z-10 flex flex-col w-full h-full max-w-screen-sm"
+            [ class "relative flex flex-col w-full h-full max-w-screen-sm"
             , class "bg-white rounded-lg shadow-md transition-transform duration-500"
             , attrIf (not show) <| style "transform" "translateY(-100vh)"
             ]
@@ -93,3 +122,17 @@ slider { onBack, onNext, index, items } =
             ]
             [ Icons.cheveronRight [] ]
         ]
+
+
+scrollToBottom : (Result Dom.Error () -> msg) -> String -> Cmd msg
+scrollToBottom toMsg id =
+    Dom.getViewportOf id
+        |> Task.andThen (\info -> Dom.setViewportOf id 0 info.scene.height)
+        |> Task.attempt toMsg
+
+
+type alias Skeleton msg =
+    { subHeader : List (Html msg)
+    , body : List (Html msg)
+    , menuTitle : String
+    }
