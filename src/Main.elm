@@ -143,6 +143,7 @@ type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChange Url.Url
     | NavToogle
+    | SettingsToggle
     | MealsMsg Meals.Msg
     | NoOp
 
@@ -166,6 +167,14 @@ update msg model =
             let
                 newPage =
                     updateSession (\session -> { session | navOpen = not session.navOpen })
+                        model.page
+            in
+            ( { model | page = newPage }, Cmd.none )
+
+        SettingsToggle ->
+            let
+                newPage =
+                    updateSession (\session -> { session | settingsOpen = not session.settingsOpen })
                         model.page
             in
             ( { model | page = newPage }, Cmd.none )
@@ -286,16 +295,56 @@ viewPageTitle title =
 
 viewSkeleton : (a -> Msg) -> VH.Skeleton a -> Model -> Html Msg
 viewSkeleton toMsg skeleton model =
+    let
+        session =
+            getSession model.page
+    in
     div [ class "relative w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
         [ header [ class "sticky top-0 z-10 w-full" ]
-            [ div [ class "relative flex items-center h-12 text-white bg-indigo-700 shadow-md" ]
+            [ div [ class "relative z-10 flex items-center h-12 text-white bg-indigo-700 shadow-md" ]
                 [ viewPageTitle skeleton.menuTitle
-                , div [ class "w-8 h-8 ml-auto mr-2" ] [ Icons.dotsHorizontalTriple [] ]
+                , viewSettings session
                 ]
-            , div [] <| List.map (Html.map toMsg) skeleton.subHeader
+            , div [ class "relative" ] <| List.map (Html.map toMsg) skeleton.subHeader
             ]
         , main_ [] <| List.map (Html.map toMsg) skeleton.body
         , viewNav model
+        ]
+
+
+viewSettings : Session -> Html Msg
+viewSettings session =
+    let
+        linkItem text_ link =
+            li []
+                [ VH.externalLink
+                    { href = link
+                    , title = Nothing
+                    , children = [ text text_ ]
+                    , attr =
+                        [ class "block px-4 py-2 hover:bg-gray-200"
+                        , onClick SettingsToggle
+                        ]
+                    }
+                ]
+    in
+    div [ class "relative px-1 ml-auto mr-2 cursor-pointer" ]
+        [ Icons.dotsHorizontalTriple [ SA.class "w-8", onClick SettingsToggle ]
+        , div
+            [ class "fixed inset-0"
+            , VH.attrIf (not session.settingsOpen) (class "hidden")
+            , onClick SettingsToggle
+            ]
+            []
+        , ul
+            [ class "absolute top-0 right-0 w-48 bg-white shadow-md main-text-color"
+            , class "v-gap-2"
+            , VH.attrIf (not session.settingsOpen) (class "hidden")
+            ]
+            [ linkItem "Report a bug" "https://github.com/ChristophP/keto-meal-planner/issues/new"
+            , linkItem "Request a feature" "https://github.com/ChristophP/keto-meal-planner/issues/new"
+            , linkItem "Changelog" "https://github.com/ChristophP/keto-meal-planner/blob/master/CHANGELOG.md"
+            ]
         ]
 
 

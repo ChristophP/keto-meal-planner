@@ -1,8 +1,16 @@
-module View.Helpers exposing (Skeleton, attrIf, dialog, inputField, scrollToBottom, slider)
+module View.Helpers exposing
+    ( Skeleton
+    , attrIf
+    , dialog
+    , externalLink
+    , inputField
+    , scrollToBottom
+    , slider
+    )
 
 import Browser.Dom as Dom
-import Html exposing (Attribute, Html, button, div, input, li, p, text, ul)
-import Html.Attributes exposing (class, classList, disabled, style)
+import Html exposing (Attribute, Html, a, button, div, input, li, p, text, ul)
+import Html.Attributes exposing (class, classList, disabled, href, rel, style, target, title)
 import Html.Events exposing (onClick)
 import Task
 import Zondicons as Icons
@@ -21,6 +29,25 @@ inputField : List (Attribute msg) -> List (Html msg) -> Html msg
 inputField attr =
     input
         (class "w-full p-2 shadow focus:shadow-outline" :: attr)
+
+
+externalLink :
+    { href : String
+    , title : Maybe String
+    , children : List (Html msg)
+    , attr : List (Attribute msg)
+    }
+    -> Html msg
+externalLink props =
+    a
+        ([ href props.href
+         , title (Maybe.withDefault "" props.title)
+         , target "_blank"
+         , rel "noopener noreferrer"
+         ]
+            ++ props.attr
+        )
+        props.children
 
 
 dialog :

@@ -257,7 +257,7 @@ viewFoodsList searchTerm foods =
         pairs =
             Dict.toList <| searchFoods searchTerm foods
     in
-    div [ class "flex-1 overflow-y-auto v-gap" ] <|
+    div [ class "flex-1 overflow-y-auto v-gap-4" ] <|
         List.map
             (\( category, items ) ->
                 div [ class "px-4" ]

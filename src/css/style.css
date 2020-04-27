@@ -38,9 +38,11 @@ svg {
   max-width: var(--app-width);
 }
 
-.nav-width {
-  width: calc(2/3 * var(--app-width));
+.main-text-color {
+  @apply text-gray-800;
 }
+
+
 
 /* my components end */
 
@@ -60,11 +62,11 @@ svg {
   flex: 0 0 100%;
 }
 
-.v-gap > * + * {
+.v-gap-4 > * + * {
   @apply mt-4;
 }
 
-.v-gap-sm > * + * {
+.v-gap-2 > * + * {
   @apply mt-2;
 }
 
