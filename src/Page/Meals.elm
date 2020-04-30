@@ -5,14 +5,13 @@ import Data.Food as Food
 import Data.Meal as Meal
 import Data.Session exposing (Session)
 import Dict exposing (Dict)
-import Html exposing (Html, a, button, div, header, input, li, nav, ol, p, span, text, ul)
-import Html.Attributes exposing (class, classList, disabled, href, id, placeholder, style, type_, value)
+import Html exposing (Html, button, div, input, li, ol, p, span, text, ul)
+import Html.Attributes exposing (class, classList, disabled, id, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Json.Decode as JD
 import List.Extra as LE
 import String.Mark as Mark
 import Svg.Attributes
-import Task exposing (Task)
+import Task
 import Util exposing (toFixed, toPercentage)
 import View.Helpers as VH
 import Zondicons as Icons
