@@ -3,6 +3,7 @@ module Data.Food exposing
     , Nutrient(..)
     , caloriesPerGram
     , decoder
+    , fromNameAndNutrients
     , getCalories
     , getNutrientCalories
     , getNutrientGrams
@@ -29,6 +30,11 @@ type Nutrient
     = Protein
     | Fat
     | Carbs
+
+
+fromNameAndNutrients : String -> { protein : Float, fat : Float, carbs : Float } -> Food
+fromNameAndNutrients name { protein, fat, carbs } =
+    Food name protein fat carbs
 
 
 type alias Food =

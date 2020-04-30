@@ -8,6 +8,7 @@ import Html exposing (Html, a, div, header, li, main_, nav, span, text, ul)
 import Html.Attributes exposing (class, href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
+import Page.Foods as Foods
 import Page.Meals as Meals
 import Svg.Attributes as SA
 import Url exposing (Url)
@@ -34,7 +35,7 @@ main =
 
 type Page
     = Meals Meals.Model
-    | Foods Session
+    | Foods Foods.Model
     | Recipes Session
 
 
@@ -74,8 +75,8 @@ getSession page =
         Meals model ->
             model.session
 
-        Foods session ->
-            session
+        Foods model ->
+            model.session
 
         Recipes session ->
             session
@@ -87,8 +88,8 @@ updateSession func page =
         Meals pageModel ->
             Meals { pageModel | session = func pageModel.session }
 
-        Foods session ->
-            Foods (func session)
+        Foods pageModel ->
+            Foods { pageModel | session = func pageModel.session }
 
         Recipes session ->
             Recipes (func session)
@@ -136,6 +137,7 @@ type Msg
     | NavToogle
     | SettingsToggle
     | MealsMsg Meals.Msg
+    | FoodsMsg Foods.Msg
     | NoOp
 
 
@@ -177,6 +179,14 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        FoodsMsg pageMsg ->
+            case model.page of
+                Foods pageModel ->
+                    updatePage Foods FoodsMsg model (Foods.update pageMsg pageModel)
+
+                _ ->
+                    ( model, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -194,7 +204,7 @@ updateUrl url model =
         parser =
             UrlParser.oneOf
                 [ UrlParser.map ( { model | page = Meals (Meals.init session) }, Cmd.none ) (UrlParser.s "meals")
-                , UrlParser.map ( { model | page = Foods session }, Cmd.none ) (UrlParser.s "foods")
+                , UrlParser.map ( { model | page = Foods (Foods.init session) }, Cmd.none ) (UrlParser.s "foods")
                 , UrlParser.map ( { model | page = Recipes session }, Cmd.none ) (UrlParser.s "recipes")
                 ]
     in
@@ -343,8 +353,8 @@ view model =
             Meals pageModel ->
                 viewSkeleton MealsMsg (Meals.view pageModel) model
 
-            Foods _ ->
-                viewSkeleton identity { subHeader = [], body = [ div [ class "flex items-center justify-center h-64" ] [ text "Coming Soon" ] ], menuTitle = "Foods" } model
+            Foods pageModel ->
+                viewSkeleton FoodsMsg (Foods.view pageModel) model
 
             Recipes _ ->
                 viewSkeleton identity { subHeader = [], body = [ div [ class "flex items-center justify-center h-64" ] [ text "Coming Soon" ] ], menuTitle = "Recipes" } model
