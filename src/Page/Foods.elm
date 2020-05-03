@@ -110,12 +110,30 @@ view model =
         body =
             case model.state of
                 _ ->
-                    [ div []
+                    [ div [ class "px-4 py-2 space-y-2" ]
                         [ VH.inputField
                             [ id foodNameInputId
-                            , placeholder "Search for Food"
+                            , placeholder "Food name"
                             , onInput FoodNameChanged
                             , value model.name
+                            ]
+                            []
+                        , VH.inputField
+                            [ placeholder "Protein"
+                            , onInput FoodProteinChanged
+                            , value model.protein
+                            ]
+                            []
+                        , VH.inputField
+                            [ placeholder "Fat"
+                            , onInput FoodFatChanged
+                            , value model.fat
+                            ]
+                            []
+                        , VH.inputField
+                            [ placeholder "Carbs"
+                            , onInput FoodCarbsChanged
+                            , value model.carbs
                             ]
                             []
                         ]
