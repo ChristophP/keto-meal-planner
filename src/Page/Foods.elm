@@ -22,6 +22,13 @@ import Zondicons as Icons
 
 
 type State
+    = Loading
+    | ShowList
+    | Edit EditState
+    | Error
+
+
+type EditState
     = Editing
     | Submitted
 
@@ -41,7 +48,7 @@ init session =
     , protein = ""
     , fat = ""
     , carbs = ""
-    , state = Editing
+    , state = Loading
     , session = session
     }
 
@@ -52,7 +59,11 @@ init session =
 
 type Msg
     = FoodNameChanged String
+    | FoodProteinChanged String
+    | FoodFatChanged String
+    | FoodCarbsChanged String
     | DialogCancelled
+    | FoodSubmitted
     | NoOp
 
 
@@ -62,6 +73,21 @@ update msg model =
         FoodNameChanged name ->
             ( { model | name = name }, Cmd.none )
 
+        FoodProteinChanged protein ->
+            ( { model | protein = protein }, Cmd.none )
+
+        FoodFatChanged fat ->
+            ( { model | fat = fat }, Cmd.none )
+
+        FoodCarbsChanged carbs ->
+            ( { model | carbs = carbs }, Cmd.none )
+
+        FoodSubmitted ->
+            ( model, Cmd.none )
+
+        --case parseFood of
+        --Ok food ->
+        --Err err -> Debug.todo "Handle error"
         DialogCancelled ->
             ( model, Cmd.none )
 
@@ -80,31 +106,28 @@ foodNameInputId =
 
 view : Model -> VH.Skeleton Msg
 view model =
-    { subHeader = []
-    , body =
-        case model.session.foods of
-            Ok foods ->
-                [ div []
-                    [ VH.inputField
-                        [ id foodNameInputId
-                        , placeholder "Search for Food"
-                        , onInput FoodNameChanged
-                        , value model.name
-                        ]
-                        []
-                    ]
-                , VH.dialog
-                    { show = False
-                    , title = "Pick Food"
-                    , content =
-                        [ div [ class "flex flex-col h-full" ]
+    let
+        body =
+            case model.state of
+                _ ->
+                    [ div []
+                        [ VH.inputField
+                            [ id foodNameInputId
+                            , placeholder "Search for Food"
+                            , onInput FoodNameChanged
+                            , value model.name
+                            ]
                             []
                         ]
-                    , onClose = DialogCancelled
-                    }
-                ]
-
-            Err err ->
-                [ text "Foods lists could not be parsed" ]
-    , menuTitle = "Foods"
-    }
+                    , VH.dialog
+                        { show = False
+                        , title = "Pick Food"
+                        , content =
+                            [ div [ class "flex flex-col h-full" ]
+                                []
+                            ]
+                        , onClose = DialogCancelled
+                        }
+                    ]
+    in
+    { subHeader = [], body = body, menuTitle = "Foods" }

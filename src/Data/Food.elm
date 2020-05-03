@@ -37,6 +37,32 @@ fromNameAndNutrients name { protein, fat, carbs } =
     Food name protein fat carbs
 
 
+parse :
+    { a | name : String, protein : String, fat : String, carbs : String }
+    -> Result (List String) Food
+parse { name, protein, fat, carbs } =
+    Debug.todo ""
+
+
+parseName : String -> Result String String
+parseName name =
+    if String.length name >= 3 then
+        Ok name
+
+    else
+        Err "Name is too short"
+
+
+parseNutrient : String -> Result String Float
+parseNutrient nutrient =
+    case String.toFloat nutrient of
+        Just val ->
+            Ok (clamp 0 100 val)
+
+        Nothing ->
+            Err "Could not parse a number value"
+
+
 type alias Food =
     { name : String
     , protein : Float
