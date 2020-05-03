@@ -104,17 +104,25 @@ type alias Model =
 init : JD.Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init json url navKey =
     let
-        foods =
+        result =
             JD.decodeValue Food.decoder json
                 |> Result.mapError (always "Could not decode food list")
 
         session =
-            Session.init navKey foods
+            Session.init navKey
     in
-    updateUrl url
-        { page = Meals (Meals.init session)
-        , navKey = navKey
-        }
+    case result of
+        Ok foods ->
+            updateUrl url
+                { page = Meals (Meals.init (Session.addFoods foods session))
+                , navKey = navKey
+                }
+
+        Err err ->
+            updateUrl url
+                { page = Meals (Meals.init session)
+                , navKey = navKey
+                }
 
 
 
@@ -296,18 +304,33 @@ viewSkeleton toMsg skeleton model =
     let
         session =
             getSession model.page
+
+        { menuTitle, body, subHeader } =
+            if Session.hasFoods session then
+                skeleton
+
+            else
+                viewLoadingError skeleton
     in
-    div [ class "relative w-full h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
+    div [ class "w-full min-h-full mx-auto bg-gray-200 max-w-screen-sm" ] <|
         [ header [ class "sticky top-0 z-10 w-full" ]
             [ div [ class "relative z-10 flex items-center h-12 text-white bg-indigo-700 shadow-md" ]
-                [ viewPageTitle skeleton.menuTitle
+                [ viewPageTitle menuTitle
                 , viewSettings session
                 ]
-            , div [ class "relative" ] <| List.map (Html.map toMsg) skeleton.subHeader
+            , div [ class "relative" ] <| List.map (Html.map toMsg) subHeader
             ]
-        , main_ [] <| List.map (Html.map toMsg) skeleton.body
+        , main_ [ class "" ] <| List.map (Html.map toMsg) body
         , viewNav model
         ]
+
+
+viewLoadingError : VH.Skeleton a -> VH.Skeleton a
+viewLoadingError skeleton =
+    { skeleton
+        | subHeader = []
+        , body = [ div [ class "text-red-500" ] [ text "Oh no" ] ]
+    }
 
 
 viewSettings : Session -> Html Msg
