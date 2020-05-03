@@ -320,7 +320,7 @@ viewSkeleton toMsg skeleton model =
                 ]
             , div [ class "relative" ] <| List.map (Html.map toMsg) subHeader
             ]
-        , main_ [ class "" ] <| List.map (Html.map toMsg) body
+        , main_ [] <| List.map (Html.map toMsg) body
         , viewNav model
         ]
 
@@ -329,7 +329,15 @@ viewLoadingError : VH.Skeleton a -> VH.Skeleton a
 viewLoadingError skeleton =
     { skeleton
         | subHeader = []
-        , body = [ div [ class "text-red-500" ] [ text "Oh no" ] ]
+        , body =
+            [ div
+                [ class "px-4 pt-24 text-center"
+                , class "text-4xl font-semibold text-gray-600"
+                ]
+                [ div [ class "w-16 mx-auto" ] [ Icons.exclamationSolid [] ]
+                , div [ class "mt-8" ] [ text "Error when initializing data." ]
+                ]
+            ]
     }
 
 
