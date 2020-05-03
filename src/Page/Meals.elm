@@ -475,45 +475,40 @@ view model =
                         -- should never happen
                         0
         in
-        case model.session.foods of
-            Ok foods ->
-                [ div
-                    [ class "flex-1 mb-16 smooth-scroll"
-                    , id contentBodyId
-                    ]
-                    [ viewTotalNutrientsHeader model mealPctg
-                    , ol [ class "mt-4 text-2xl text-center" ] <|
-                        List.map
-                            (viewFoodItem model.openOverlay)
-                            model.selectedFoods
-                    , button
-                        [ class "fixed bottom-0 left-0 right-0 block w-16 h-16 mx-auto mb-2 bg-white rounded-full"
-                        , class "text-indigo-600 hover:text-indigo-800"
-                        , class "rounded-full shadow-lg"
-                        , onClick AddButtonClicked
-                        ]
-                        [ Icons.addSolid [] ]
-                    ]
-                , VH.dialog
-                    { show = model.showFoods
-                    , title = "Pick Food"
-                    , content =
-                        [ div [ class "flex flex-col h-full" ]
-                            [ VH.inputField
-                                [ id foodSearchId
-                                , placeholder "Search for Food"
-                                , onInput SearchChanged
-                                , value model.searchTerm
-                                ]
-                                []
-                            , viewFoodsList model.searchTerm foods
-                            ]
-                        ]
-                    , onClose = DialogCancelled
-                    }
+        [ div
+            [ class "flex-1 mb-16 smooth-scroll"
+            , id contentBodyId
+            ]
+            [ viewTotalNutrientsHeader model mealPctg
+            , ol [ class "mt-4 text-2xl text-center" ] <|
+                List.map
+                    (viewFoodItem model.openOverlay)
+                    model.selectedFoods
+            , button
+                [ class "fixed bottom-0 left-0 right-0 block w-16 h-16 mx-auto mb-2 bg-white rounded-full"
+                , class "text-indigo-600 hover:text-indigo-800"
+                , class "rounded-full shadow-lg"
+                , onClick AddButtonClicked
                 ]
-
-            Err err ->
-                [ text "Foods lists could not be parsed" ]
+                [ Icons.addSolid [] ]
+            ]
+        , VH.dialog
+            { show = model.showFoods
+            , title = "Pick Food"
+            , content =
+                [ div [ class "flex flex-col h-full" ]
+                    [ VH.inputField
+                        [ id foodSearchId
+                        , placeholder "Search for Food"
+                        , onInput SearchChanged
+                        , value model.searchTerm
+                        ]
+                        []
+                    , viewFoodsList model.searchTerm model.session.foods
+                    ]
+                ]
+            , onClose = DialogCancelled
+            }
+        ]
     , menuTitle = "Meals"
     }
