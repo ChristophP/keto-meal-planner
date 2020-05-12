@@ -1,10 +1,10 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Browser.Navigation as Nav
 import Data.Food as Food
 import Data.Session as Session exposing (Session)
-import Html exposing (Html, a, div, header, li, main_, nav, span, text, ul)
+import Html exposing (Html, a, button, div, header, li, main_, nav, p, span, text, ul)
 import Html.Attributes exposing (class, href, style)
 import Html.Events exposing (onClick)
 import Json.Decode as JD
@@ -15,6 +15,9 @@ import Url exposing (Url)
 import Url.Parser as UrlParser
 import View.Helpers as VH
 import Zondicons as Icons
+
+
+port storeRatioNoteSeenStateLocally : String -> Cmd msg
 
 
 main : Program JD.Value Model Msg
@@ -98,30 +101,41 @@ updateSession func page =
 type alias Model =
     { page : Page
     , navKey : Nav.Key
+    , ratioNoteOpen : Bool
+    , ratioNoteSeen : Bool
     }
 
 
 init : JD.Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init json url navKey =
     let
+        decoder =
+            JD.map2 Tuple.pair
+                (JD.field "data" Food.decoder)
+                (JD.field "ratioNoteSeen" JD.bool)
+
         result =
-            JD.decodeValue Food.decoder json
+            JD.decodeValue decoder json
                 |> Result.mapError (always "Could not decode food list")
 
         session =
             Session.init navKey
     in
     case result of
-        Ok foods ->
+        Ok ( foods, ratioNoteSeen ) ->
             updateUrl url
                 { page = Meals (Meals.init (Session.addFoods foods session))
                 , navKey = navKey
+                , ratioNoteOpen = True
+                , ratioNoteSeen = ratioNoteSeen
                 }
 
         Err err ->
             updateUrl url
                 { page = Meals (Meals.init session)
                 , navKey = navKey
+                , ratioNoteOpen = False
+                , ratioNoteSeen = True
                 }
 
 
@@ -146,6 +160,7 @@ type Msg
     | SettingsToggle
     | MealsMsg Meals.Msg
     | FoodsMsg Foods.Msg
+    | AcknowledgeRatioNote Bool
     | NoOp
 
 
@@ -194,6 +209,15 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        AcknowledgeRatioNote remember ->
+            ( { model | ratioNoteOpen = False }
+            , if remember then
+                storeRatioNoteSeenStateLocally "1"
+
+              else
+                Cmd.none
+            )
 
         NoOp ->
             ( model, Cmd.none )
@@ -385,8 +409,34 @@ view model =
                 viewSkeleton MealsMsg (Meals.view pageModel) model
 
             Foods pageModel ->
-                viewSkeleton FoodsMsg (Foods.view pageModel) model
+                viewSkeleton identity { subHeader = [], body = [ div [ class "flex items-center justify-center h-64" ] [ text "Coming Soon" ] ], menuTitle = "Foods" } model
 
+            --viewSkeleton FoodsMsg (Foods.view pageModel) model
             Recipes _ ->
                 viewSkeleton identity { subHeader = [], body = [ div [ class "flex items-center justify-center h-64" ] [ text "Coming Soon" ] ], menuTitle = "Recipes" } model
+        , VH.viewIf (not model.ratioNoteSeen && model.ratioNoteOpen) <|
+            \_ ->
+                div
+                    [ class "fixed inset-0 z-50" ]
+                    [ div [ class "w-full h-full bg-black opacity-75" ]
+                        []
+                    , div [ class "absolute inset-x-0 bottom-0 max-h-screen px-4 py-4 mx-auto overflow-y-auto leading-loose bg-white shadow-md app-width" ]
+                        [ p [] [ text "Hi there! We just wanna inform you that the ratio has changed." ]
+                        , p [ class "mt-4" ] [ text "It used to be (protein, fat, carbs) 8/84/8. Now it is 9/79/12 because our daughter needs a change in the ratio. Unfortunately, we currently don't support setting your own ratio, but we are planning to support it and are working on it. We're sorry for the inconvenience and please send us an email at keto@deedop.de if you want to reach out to us." ]
+                        , button
+                            [ class "block w-full p-4 mt-4 text-white bg-indigo-600 rounded shadow-md"
+                            , class "font-semibold tracking-wider"
+                            , onClick (AcknowledgeRatioNote True)
+                            ]
+                            [ text "Understood" ]
+                        , button
+                            [ class "block w-full p-4 mt-4 text-black bg-white rounded shadow-md"
+                            , class "font-semibold tracking-wider"
+                            , onClick (AcknowledgeRatioNote False)
+                            ]
+                            [ text "Remind me next time" ]
+
+                        -- TODO add "Understood" and "remind me next time"
+                        ]
+                    ]
         ]

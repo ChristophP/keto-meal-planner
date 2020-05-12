@@ -6,6 +6,7 @@ module View.Helpers exposing
     , inputField
     , scrollToBottom
     , slider
+    , viewIf
     )
 
 import Browser.Dom as Dom
@@ -23,6 +24,15 @@ attrIf show attr =
 
     else
         classList []
+
+
+viewIf : Bool -> (() -> Html msg) -> Html msg
+viewIf show toHtml =
+    if show then
+        toHtml ()
+
+    else
+        text ""
 
 
 inputField : List (Attribute msg) -> List (Html msg) -> Html msg

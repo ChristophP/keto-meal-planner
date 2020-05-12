@@ -37,11 +37,12 @@ fromNameAndNutrients name { protein, fat, carbs } =
     Food name protein fat carbs
 
 
-parse :
-    { a | name : String, protein : String, fat : String, carbs : String }
-    -> Result (List String) Food
-parse { name, protein, fat, carbs } =
-    Debug.todo ""
+
+--parse :
+--{ a | name : String, protein : String, fat : String, carbs : String }
+---> Result (List String) Food
+--parse { name, protein, fat, carbs } =
+--Debug.todo ""
 
 
 parseName : String -> Result String String

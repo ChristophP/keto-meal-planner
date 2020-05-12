@@ -26,7 +26,7 @@ totalAllowedCalories =
 
 
 targetNutritionRatio =
-    { protein = 0.08, fat = 0.84, carbs = 0.08 }
+    { protein = 0.09, fat = 0.79, carbs = 0.12 }
 
 
 type alias Model =
