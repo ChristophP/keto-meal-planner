@@ -176,6 +176,13 @@ viewNutrientPctg num food =
     toFixed 1 (num / Food.totalNutrientWeightPer100grams food * 100) ++ "%"
 
 
+viewNutrientParts : Int -> Float -> Food.Food -> String
+viewNutrientParts weight num food =
+    toFixed 1 (toFloat weight * num / 100) ++ "g"
+--    I assume here that all values are entered per 100g - the math below throws me wrong values back     
+--    toFixed 1 (toFloat weight * num / Food.totalNutrientWeightPer100grams food) ++ "g"
+
+
 viewMealGrams : Food.Nutrient -> List ( Int, Food.Food ) -> Html Msg
 viewMealGrams nutrient foods =
     let
@@ -302,19 +309,19 @@ viewFoodItem maybeOpenFood ( grams, food ) =
             ]
         , div [ class "flex pb-1" ]
             [ div [ class "flex flex-col flex-1 px-1 text-sm" ]
-                [ span [] [ text "Protein" ]
-                , span [] [ text <| toFixed 2 food.protein, text "g" ]
-                , span [] [ text (viewNutrientPctg food.protein food) ]
+                [ span [] [ text "Fat ",text (viewNutrientParts grams food.fat food) ]
+                , span [] [ text "Protein ",text (viewNutrientParts grams food.protein food) ]
+                , span [] [ text "Carbs ",text (viewNutrientParts grams food.carbs food) ]
                 ]
             , div [ class "flex flex-col flex-1 px-1 text-sm" ]
-                [ span [ class "text-sm" ] [ text "Fat" ]
-                , span [] [ text <| toFixed 2 food.fat, text "g" ]
-                , span [] [ text (viewNutrientPctg food.fat food) ]
+                [ span [] [ text " " ]
+                , span [] [ text <|String.fromInt grams, text "g" ]
+                , span [] [ text " " ]
                 ]
             , div [ class "flex flex-col flex-1 px-1 text-sm" ]
-                [ span [] [ text "Carbs" ]
-                , span [] [ text <| toFixed 2 food.carbs, text "g" ]
-                , span [] [ text (viewNutrientPctg food.carbs food) ]
+                [ span [] [ text "Fat ", text <| toFixed 1 food.fat, text "g / 100g" ]
+                , span [] [ text "Protein ", text <| toFixed 1 food.protein, text "g / 100g" ]
+                , span [] [ text "Carbs ",  text <| toFixed 1 food.carbs, text "g / 100g" ]
                 ]
             ]
         , viewFoodOverlay
