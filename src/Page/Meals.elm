@@ -376,6 +376,14 @@ viewGramPicker grams name =
             , onClick <| FoodWeightPicked (grams - 5) name
             , disabled (grams - 5 < 0)
             ]
+            [ text "--" ]
+        , button
+            [ type_ "button"
+            , class buttonClasses
+            , class "rounded-l-md"
+            , onClick <| FoodWeightPicked (grams - 1) name
+            , disabled (grams - 1 < 0)
+            ]
             [ text "-" ]
         , input
             [ class "w-16 text-center text-gray-700 rounded-none"
@@ -387,9 +395,15 @@ viewGramPicker grams name =
         , button
             [ class buttonClasses
             , class "rounded-r-md"
-            , onClick <| FoodWeightPicked (grams + 5) name
+            , onClick <| FoodWeightPicked (grams + 1) name
             ]
             [ text "+" ]
+        , button
+            [ class buttonClasses
+            , class "rounded-r-md"
+            , onClick <| FoodWeightPicked (grams + 5) name
+            ]
+            [ text "++" ]
         ]
 
 
