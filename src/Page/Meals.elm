@@ -471,6 +471,10 @@ viewTotalNutrientsHeader model mealPctg =
                     , text (toPercentage targetNutritionRatio.carbs)
                     ]
                 ]
+            , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
+                [ span [ class "text-sm" ] [ text "Cal" ]
+                , span [ class "text-sm" ] [ text "KD" ]
+                ]
             ]
         ]
 
