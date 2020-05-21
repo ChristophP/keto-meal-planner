@@ -4,6 +4,7 @@ module Data.Food exposing
     , caloriesPerGram
     , decoder
     , getCalories
+    , getKDFactor
     , getNutrientCalories
     , getNutrientGrams
     , totalNutrientWeightPer100grams
@@ -86,3 +87,10 @@ getNutrientCalories nutrient grams food =
                     caloriesPerGram.carbs
     in
     getNutrientGrams nutrient grams food * factor
+
+
+{-| The KD Factor indicated the relationship of grams of fat to grams of protein and carbs
+-}
+getKDFactor : Food -> Float
+getKDFactor { protein, fat, carbs } =
+    fat / (protein + carbs)
