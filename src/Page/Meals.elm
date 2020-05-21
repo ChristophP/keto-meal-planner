@@ -179,7 +179,10 @@ viewNutrientPctg num food =
 viewNutrientParts : Int -> Float -> Food.Food -> String
 viewNutrientParts weight num food =
     toFixed 1 (toFloat weight * num / 100) ++ "g"
---    I assume here that all values are entered per 100g - the math below throws me wrong values back     
+
+
+
+--    I assume here that all values are entered per 100g - the math below throws me wrong values back
 --    toFixed 1 (toFloat weight * num / Food.totalNutrientWeightPer100grams food) ++ "g"
 
 
@@ -195,43 +198,39 @@ viewMealGrams nutrient foods =
         [ text <| toFixed 1 totalGrams ++ "g" ]
 
 
-viewMealCal : Food.Nutrient -> List ( Int, Food.Food ) -> Html Msg
-viewMealCal nutrient =
+viewMealCal : List ( Float, Food.Food ) -> Html Msg
+viewMealCal foodPortions =
     let
-        totalGramsP =
-            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) Food.Protein
+        totalCal =
+            List.map (\( grams, food ) -> Food.getCalories grams food) foodPortions
                 |> List.sum
-        totalGramsCH =
-            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) Food.Carbs
-                |> List.sum
-        totalGramsF =
-            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) Food.Fat
-                |> List.sum
-        totalCal = totalGramsF * 9 + totalGramsCH * 4 + totalGramsP * 4        
     in
     span
         [ class "font-medium text-indigo-700" ]
-        [ text <| toFixed 0 totalCal]
+        [ text <| toFixed 0 totalCal ]
 
 
-viewMealKD : Food.Nutrient -> List ( Int, Food.Food ) -> Html Msg
-viewMealKD nutrient =
+viewMealKD : List ( Float, Food.Food ) -> Html Msg
+viewMealKD foodPortions =
     let
         totalGramsP =
-            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) Food.Protein
+            List.map (\( grams, food ) -> Food.getNutrientGrams Food.Protein grams food) foodPortions
                 |> List.sum
+
         totalGramsCH =
-            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) Food.Carbs
+            List.map (\( grams, food ) -> Food.getNutrientGrams Food.Carbs grams food) foodPortions
                 |> List.sum
+
         totalGramsF =
-            List.map (\( grams, food ) -> Food.getNutrientGrams nutrient (toFloat grams) food) Food.Fat
+            List.map (\( grams, food ) -> Food.getNutrientGrams Food.Fat grams food) foodPortions
                 |> List.sum
-        totalKD = totalGramsF / (totalGramsCH * 4 + totalGramsP * 4)
+
+        totalKD =
+            totalGramsF / (totalGramsCH * 4 + totalGramsP * 4)
     in
     span
         [ class "font-medium text-indigo-700" ]
-        [ text <| toFixed 1 totalKD]
-
+        [ text <| toFixed 1 totalKD ]
 
 
 viewMealPercentage : Food.Nutrient -> Float -> List ( Int, Food.Food ) -> Html Msg
@@ -348,19 +347,19 @@ viewFoodItem maybeOpenFood ( grams, food ) =
             ]
         , div [ class "flex pb-1" ]
             [ div [ class "flex flex-col flex-1 px-1 text-sm" ]
-                [ span [] [ text "Fat ",text (viewNutrientParts grams food.fat food) ]
-                , span [] [ text "Protein ",text (viewNutrientParts grams food.protein food) ]
-                , span [] [ text "Carbs ",text (viewNutrientParts grams food.carbs food) ]
+                [ span [] [ text "Fat ", text (viewNutrientParts grams food.fat food) ]
+                , span [] [ text "Protein ", text (viewNutrientParts grams food.protein food) ]
+                , span [] [ text "Carbs ", text (viewNutrientParts grams food.carbs food) ]
                 ]
             , div [ class "flex flex-col flex-1 px-1 text-sm" ]
                 [ span [] [ text " " ]
-                , span [] [ text <|String.fromInt grams, text "g" ]
+                , span [] [ text <| String.fromInt grams, text "g" ]
                 , span [] [ text " " ]
                 ]
             , div [ class "flex flex-col flex-1 px-1 text-sm" ]
                 [ span [] [ text "Fat ", text <| toFixed 1 food.fat, text "g / 100g" ]
                 , span [] [ text "Protein ", text <| toFixed 1 food.protein, text "g / 100g" ]
-                , span [] [ text "Carbs ",  text <| toFixed 1 food.carbs, text "g / 100g" ]
+                , span [] [ text "Carbs ", text <| toFixed 1 food.carbs, text "g / 100g" ]
                 ]
             ]
         , viewFoodOverlay
@@ -475,40 +474,46 @@ viewTotalNutrientsHeader model mealPctg =
                 [ span [] [ text "Protein" ]
                 , span []
                     [ viewMealGrams Food.Protein model.selectedFoods
---                    , text " / "
---                    , text <| toFixed 2 proteinTarget ++ "g"
+
+                    --                    , text " / "
+                    --                    , text <| toFixed 2 proteinTarget ++ "g"
                     ]
---                , span []
---                    [ viewMealPercentage Food.Protein targetNutritionRatio.protein model.selectedFoods
---                    , text " / "
---                    , text (toPercentage targetNutritionRatio.protein)
---                    ]
+
+                --                , span []
+                --                    [ viewMealPercentage Food.Protein targetNutritionRatio.protein model.selectedFoods
+                --                    , text " / "
+                --                    , text (toPercentage targetNutritionRatio.protein)
+                --                    ]
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [ class "text-sm" ] [ text "Fat" ]
                 , span []
                     [ viewMealGrams Food.Fat model.selectedFoods
---                    , text " / "
---                    , text <| toFixed 2 fatTarget ++ "g"
+
+                    --                    , text " / "
+                    --                    , text <| toFixed 2 fatTarget ++ "g"
                     ]
---                , span []
---                    [ viewMealPercentage Food.Fat targetNutritionRatio.fat model.selectedFoods
---                    , text " / "
---                    , text (toPercentage targetNutritionRatio.fat)
---                    ]
+
+                --                , span []
+                --                    [ viewMealPercentage Food.Fat targetNutritionRatio.fat model.selectedFoods
+                --                    , text " / "
+                --                    , text (toPercentage targetNutritionRatio.fat)
+                --                    ]
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm" ]
                 [ span [] [ text "Carbs" ]
                 , span []
                     [ viewMealGrams Food.Carbs model.selectedFoods
---                    , text " / "
---                    , text <| toFixed 2 carbsTarget ++ "g"
+
+                    --                    , text " / "
+                    --                    , text <| toFixed 2 carbsTarget ++ "g"
                     ]
---                , span []
---                    [ viewMealPercentage Food.Carbs targetNutritionRatio.carbs model.selectedFoods
---                    , text " / "
---                    , text (toPercentage targetNutritionRatio.carbs)
---                    ]
+
+                --                , span []
+                --                    [ viewMealPercentage Food.Carbs targetNutritionRatio.carbs model.selectedFoods
+                --                    , text " / "
+                --                    , text (toPercentage targetNutritionRatio.carbs)
+                --                    ]
                 ]
             , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
                 [ span [ class "text-sm" ] [ text "Cal" ]
