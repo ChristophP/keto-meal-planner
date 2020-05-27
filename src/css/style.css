@@ -1,4 +1,3 @@
-/* purgecss start ignore */
 @tailwind base;
 
 /* my resets */
@@ -43,14 +42,11 @@ svg {
   @apply text-gray-800;
 }
 
-/* purgecss end ignore */
-
 /* my components end */
 
 @tailwind utilities;
 
 /* put custom utilities here */
-/* purgecss start ignore */
 
 .smooth-scroll {
   scroll-behavior: smooth;
@@ -72,4 +68,3 @@ svg {
   @apply ml-4;
 }
 
-/* purgecss end ignore */

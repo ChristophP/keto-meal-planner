@@ -1,4 +1,4 @@
-module Data.Session exposing (Session, init)
+module Data.Session exposing (Session, addFoods, hasFoods, init)
 
 import Browser.Navigation as Nav
 import Data.Food as Food
@@ -6,7 +6,7 @@ import Dict exposing (Dict)
 
 
 type alias Foods =
-    Result String (Dict String (List Food.Food))
+    Dict String (List Food.Food)
 
 
 type alias Session =
@@ -17,10 +17,20 @@ type alias Session =
     }
 
 
-init : Nav.Key -> Foods -> Session
-init key foods =
+init : Nav.Key -> Session
+init key =
     { navKey = key
-    , foods = foods
+    , foods = Dict.empty
     , navOpen = False
     , settingsOpen = False
     }
+
+
+addFoods : Foods -> Session -> Session
+addFoods foods session =
+    { session | foods = foods }
+
+
+hasFoods : Session -> Bool
+hasFoods =
+    not << Dict.isEmpty << .foods

@@ -26,7 +26,7 @@ totalAllowedCalories =
 
 
 targetNutritionRatio =
-    { protein = 0.08, fat = 0.84, carbs = 0.08 }
+    { protein = 0.09, fat = 0.79, carbs = 0.12 }
 
 
 type alias Model =
@@ -368,7 +368,7 @@ viewGramPicker grams name =
         buttonClasses =
             "w-12 bg-gray-500 hover:bg-gray-700 active:bg-gray-700"
     in
-    div [ class "flex px-2 shadow-md" ]
+    div [ class "flex shadow-md rounded-r-md rounded-l-md" ]
         [ button
             [ type_ "button"
             , class buttonClasses
@@ -410,8 +410,8 @@ viewTotalNutrientsHeader model mealPctg =
     in
     div [ class "mt-2 text-2xl text-center bg-white" ]
         [ span [ class "text-sm tracking-widest uppercase" ] [ text "Target calories" ]
-        , div [ class "flex pr-8" ]
-            [ div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
+        , div [ class "flex pr-8 divide-x divide-gray-600" ]
+            [ div [ class "flex flex-col flex-1 px-2 my-2 text-sm" ]
                 [ span [] [ text "Protein" ]
                 , span []
                     [ viewMealGrams Food.Protein model.selectedFoods
@@ -424,7 +424,7 @@ viewTotalNutrientsHeader model mealPctg =
                     , text (toPercentage targetNutritionRatio.protein)
                     ]
                 ]
-            , div [ class "flex flex-col flex-1 p-2 text-sm border-r border-black" ]
+            , div [ class "flex flex-col flex-1 px-2 my-2 text-sm" ]
                 [ span [ class "text-sm" ] [ text "Fat" ]
                 , span []
                     [ viewMealGrams Food.Fat model.selectedFoods
@@ -437,7 +437,7 @@ viewTotalNutrientsHeader model mealPctg =
                     , text (toPercentage targetNutritionRatio.fat)
                     ]
                 ]
-            , div [ class "flex flex-col flex-1 p-2 text-sm" ]
+            , div [ class "flex flex-col flex-1 px-2 my-2 text-sm" ]
                 [ span [] [ text "Carbs" ]
                 , span []
                     [ viewMealGrams Food.Carbs model.selectedFoods
@@ -475,44 +475,40 @@ view model =
                         -- should never happen
                         0
         in
-        case model.session.foods of
-            Ok foods ->
-                [ div
-                    [ class "flex-1 mb-16 smooth-scroll"
-                    , id contentBodyId
-                    ]
-                    [ viewTotalNutrientsHeader model mealPctg
-                    , ol [ class "mt-4 text-2xl text-center" ] <|
-                        List.map
-                            (viewFoodItem model.openOverlay)
-                            model.selectedFoods
-                    , button
-                        [ class "fixed bottom-0 left-0 right-0 block w-16 h-16 mx-auto mb-2 bg-white rounded-full"
-                        , class "text-indigo-600 hover:text-indigo-800"
-                        , onClick AddButtonClicked
-                        ]
-                        [ Icons.addSolid [ Svg.Attributes.class "rounded-full shadow-md" ] ]
-                    ]
-                , VH.dialog
-                    { show = model.showFoods
-                    , title = "Pick Food"
-                    , content =
-                        [ div [ class "flex flex-col h-full" ]
-                            [ VH.inputField
-                                [ id foodSearchId
-                                , placeholder "Search for Food"
-                                , onInput SearchChanged
-                                , value model.searchTerm
-                                ]
-                                []
-                            , viewFoodsList model.searchTerm foods
-                            ]
-                        ]
-                    , onClose = DialogCancelled
-                    }
+        [ div
+            [ class "flex-1 mb-16 smooth-scroll"
+            , id contentBodyId
+            ]
+            [ viewTotalNutrientsHeader model mealPctg
+            , ol [ class "mt-4 text-2xl text-center" ] <|
+                List.map
+                    (viewFoodItem model.openOverlay)
+                    model.selectedFoods
+            , button
+                [ class "fixed bottom-0 left-0 right-0 block w-16 h-16 mx-auto mb-2 bg-white rounded-full"
+                , class "text-indigo-600 hover:text-indigo-800"
+                , class "rounded-full shadow-lg"
+                , onClick AddButtonClicked
                 ]
-
-            Err err ->
-                [ text "Foods lists could not be parsed" ]
+                [ Icons.addSolid [] ]
+            ]
+        , VH.dialog
+            { show = model.showFoods
+            , title = "Pick Food"
+            , content =
+                [ div [ class "flex flex-col h-full" ]
+                    [ VH.inputField
+                        [ id foodSearchId
+                        , placeholder "Search for Food"
+                        , onInput SearchChanged
+                        , value model.searchTerm
+                        ]
+                        []
+                    , viewFoodsList model.searchTerm model.session.foods
+                    ]
+                ]
+            , onClose = DialogCancelled
+            }
+        ]
     , menuTitle = "Meals"
     }

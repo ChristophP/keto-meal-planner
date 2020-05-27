@@ -2,11 +2,17 @@ import {Elm} from './Main.elm'
 import storage from './storage'
 import data from './data.json'
 
+const ratioNoteSeenKey = 'ratioNoteSeen-13-05-2020'
+const ratioNoteSeen = Boolean(localStorage.getItem(ratioNoteSeenKey)) || false;
 
 const app = Elm.Main.init({
   node: document.querySelector('#app'),
-  flags: data
+  flags: {data, ratioNoteSeen}
 });
+
+app.ports.storeRatioNoteSeenStateLocally.subscribe(val =>
+  localStorage.setItem(ratioNoteSeenKey, val)
+);
 
 // register SW
 if ("serviceWorker" in navigator) {
