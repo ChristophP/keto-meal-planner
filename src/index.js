@@ -2,7 +2,7 @@ import {Elm} from './Main.elm'
 import storage from './storage'
 import data from './data.json'
 
-const ratioNoteSeenKey = 'ratioNoteSeen-13-05-2020'
+const ratioNoteSeenKey = 'ratioNoteSeen-29-06-2020'
 const ratioNoteSeen = Boolean(localStorage.getItem(ratioNoteSeenKey)) || false;
 
 const app = Elm.Main.init({

@@ -422,7 +422,7 @@ view model =
                         []
                     , div [ class "absolute inset-x-0 bottom-0 max-h-screen px-4 py-4 mx-auto overflow-y-auto leading-loose bg-white shadow-md app-width" ]
                         [ p [] [ text "Hi there! We just wanna inform you that the ratio has changed." ]
-                        , p [ class "mt-4" ] [ text "It used to be (protein, fat, carbs) 8/84/8. Now it is 9/79/12 because our daughter needs a change in the ratio. Unfortunately, we currently don't support setting your own ratio, but we are planning to support it and are working on it. We're sorry for the inconvenience and please send us an email at keto@deedop.de if you want to reach out to us." ]
+                        , p [ class "mt-4" ] [ text "It used to be (protein, fat, carbs) 9/79/12. Now it is 9/73/18 because our daughter needs a change in the ratio. Unfortunately, we currently don't support setting your own ratio, but we are planning to support it and are working on it. We're sorry for the inconvenience and please send us an email at keto@deedop.de if you want to reach out to us." ]
                         , button
                             [ class "block w-full p-4 mt-4 text-white bg-indigo-600 rounded shadow-md"
                             , class "font-semibold tracking-wider"
@@ -435,8 +435,6 @@ view model =
                             , onClick (AcknowledgeRatioNote False)
                             ]
                             [ text "Remind me next time" ]
-
-                        -- TODO add "Understood" and "remind me next time"
                         ]
                     ]
         ]

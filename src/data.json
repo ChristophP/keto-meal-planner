@@ -1973,6 +1973,76 @@
       "Cholesterin(mg)": 0,
       "Natrium(mg)": 0,
       "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Laugenstange",
+      "PER": 100,
+      "Eiweiß": 7.2,
+      "FETT": 3.6,
+      "Kohlehy.": 49.7,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Nudeln gekocht",
+      "PER": 100,
+      "Eiweiß": 4,
+      "FETT": 1,
+      "Kohlehy.": 28.7,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Breze",
+      "PER": 100,
+      "Eiweiß": 9.4,
+      "FETT": 1.7,
+      "Kohlehy.": 58.4,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Reis",
+      "PER": 100,
+      "Eiweiß": 2,
+      "FETT": 0.2,
+      "Kohlehy.": 27.0,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Taiga Brot",
+      "PER": 100,
+      "Eiweiß": 8.2,
+      "FETT": 9.0,
+      "Kohlehy.": 34,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Kokos Reis Drink",
+      "PER": 100,
+      "Eiweiß": 0.5,
+      "FETT": 0.8,
+      "Kohlehy.": 13.0,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
+    },
+    {
+      "Name": "Kokos Drink",
+      "PER": 100,
+      "Eiweiß": 0.2,
+      "FETT": 0.9,
+      "Kohlehy.": 3.4,
+      "Cholesterin(mg)": 0,
+      "Natrium(mg)": 0,
+      "Ballaststoffe(mg)": 0
     }
   ],
   "Süßungsmittel:": [
